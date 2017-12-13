@@ -78,7 +78,7 @@ getSideBoundaries layer = \case
     width = layerToWidth layer
     Corners{..} = getCorners layer
 
--- | Get the value in the middle of the given side.
+-- | Get the square in the middle of the given side.
 getSideMiddle :: Layer -> Side -> Int
 getSideMiddle layer side = (high + low) `div` 2
   where
