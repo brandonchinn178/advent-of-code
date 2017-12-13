@@ -8,7 +8,7 @@ import Utils
 
 type Position = (Int, Int) -- The position of a square; (0, 0) is square 1
 type Square = Int -- The square number; e.g. 1, 2, 3, 4
-type Value = Int -- The value in a position
+type Value = Integer -- The value in a position
 
 isCorner :: Position -> Bool
 isCorner (x, y) = abs x == abs y
@@ -78,7 +78,7 @@ positionToValue prev position = if square < length prev then prev !! square else
   where
     square = positionToSquare position - 1
 
-getNext :: (Int, [Value], Position) -> (Int, [Value], Position)
+getNext :: (Value, [Value], Position) -> (Value, [Value], Position)
 getNext (_, prev, position) = (value, prev ++ [value], nextPosition position)
   where
     (x, y) = position
@@ -93,7 +93,7 @@ values = map fst' $ iterate getNext (1, [1], nextPosition (0, 0))
     fst' (x, _, _) = x
 
 -- | The first value written that is larger than the given input.
-firstLargerThan :: Int -> Int
+firstLargerThan :: Value -> Value
 firstLargerThan input = head $ filter (> input) values
 
 main :: IO ()
