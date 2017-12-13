@@ -1,12 +1,8 @@
 module Main where
 
-<<<<<<< HEAD
-import Data.List (tails)
-=======
 import Utils
 
 import Data.List (subsequences)
->>>>>>> e1841f4... Add utility testers and run script
 
 type Row = [Int]
 type Spreadsheet = [Row]
@@ -21,7 +17,7 @@ part1Check :: Row -> Int
 part1Check row = maximum row - minimum row
 
 part2Check :: Row -> Int
-part2Check row = go [(a,b) | (a:bs) <- tails row, b <- bs]
+part2Check = go . allPairs
   where
     go ((a, b):rest) =
       let
