@@ -1,0 +1,9 @@
+#!/bin/bash
+
+day=$1
+if [[ -z $day ]]; then
+    echo "No puzzle selected" >&2
+    exit 1
+fi
+
+exec stack runghc "Day${day}.hs"

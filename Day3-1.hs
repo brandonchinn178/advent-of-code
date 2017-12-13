@@ -3,6 +3,7 @@
 module Main where
 
 import Day3
+import Utils
 
 -- | Get the layer the given number is in
 getLayer :: Int -> Int
@@ -40,15 +41,11 @@ getDistance x = toMid + layer
     toMid = getDistanceToMiddle x layer side
 
 main :: IO ()
-main = do
-  putStrLn "* Part 1:"
-  check 1
-  check 12
-  check 23
-  check 1024
-  check 325489
-  where
-    check input = do
-      putStrLn "***"
-      putStrLn $ "Testing: " ++ show input
-      print $ getDistance input
+main = part 1 $ do
+  check "getDistance" getDistance
+    [ (1, 0)
+    , (12, 3)
+    , (23, 2)
+    , (1024, 31)
+    ]
+  solve $ getDistance 325489

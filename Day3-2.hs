@@ -4,6 +4,7 @@
 module Main where
 
 import Day3
+import Utils
 
 import Data.Maybe (catMaybes)
 
@@ -88,15 +89,18 @@ firstLargerThan :: Int -> Int
 firstLargerThan input = head $ filter (> input) spiral
 
 main :: IO ()
-main = do
-  putStrLn "* Part 2:"
-  check 1
-  check 12
-  check 23
-  check 1024
-  check 325489
+main = part 2 $ do
+  check "getVal" getVal $ zip [1..]
+    [ 1, 1, 2, 4, 5, 10, 11, 23, 25, 26
+    , 54, 57, 59, 122, 133, 142, 147, 304
+    , 330, 351, 362, 747, 806
+    ]
+  check "firstLargerThan" firstLargerThan
+    [ (1, 2)
+    , (12, 23)
+    , (23, 25)
+    , (800, 806)
+    ]
+  solve $ firstLargerThan 325489
   where
-    check input = do
-      putStrLn "***"
-      putStrLn $ "Testing: " ++ show input
-      print $ firstLargerThan input
+    getVal = (spiral !!) . (subtract 1)

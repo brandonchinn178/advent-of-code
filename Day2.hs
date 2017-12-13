@@ -1,14 +1,26 @@
 module Main where
 
+<<<<<<< HEAD
 import Data.List (tails)
+=======
+import Utils
 
-getPuzzle :: IO [[Int]]
+import Data.List (subsequences)
+>>>>>>> e1841f4... Add utility testers and run script
+
+type Row = [Int]
+type Spreadsheet = [Row]
+
+getPuzzle :: IO Spreadsheet
 getPuzzle = (map (map read . words) . lines) <$> readFile "day2.txt"
 
-getCheckSum :: ([Int] -> Int) -> [[Int]] -> Int
+getCheckSum :: (Row -> Int) -> Spreadsheet -> Int
 getCheckSum getRowCheckSum = sum . map getRowCheckSum
 
+part1Check :: Row -> Int
 part1Check row = maximum row - minimum row
+
+part2Check :: Row -> Int
 part2Check row = go [(a,b) | (a:bs) <- tails row, b <- bs]
   where
     go ((a, b):rest) =
@@ -22,15 +34,12 @@ part2Check row = go [(a,b) | (a:bs) <- tails row, b <- bs]
 
 main :: IO ()
 main = do
-  putStrLn "* Part 1:"
-  check part1Check [[5,1,9,5],[7,5,3],[2,4,6,8]]
-  getPuzzle >>= check part1Check
+  part 1 $ do
+    let input = [[5,1,9,5],[7,5,3],[2,4,6,8]]
+    check "getCheckSum" (getCheckSum part1Check) [(input, 18)]
+    getPuzzle >>= solve . getCheckSum part1Check
 
-  putStrLn "* Part 2:"
-  check part2Check [[5,9,2,8],[9,4,7,3],[3,8,6,5]]
-  getPuzzle >>= check part2Check
-  where
-    check rowCheck input = do
-      putStrLn "***"
-      putStrLn $ "Testing: " ++ show input
-      print $ getCheckSum rowCheck input
+  part 2 $ do
+    let input = [[5,9,2,8],[9,4,7,3],[3,8,6,5]]
+    check "getCheckSum" (getCheckSum part2Check) [(input, 9)]
+    getPuzzle >>= solve . getCheckSum part2Check
