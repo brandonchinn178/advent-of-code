@@ -1,0 +1,5 @@
+#!/bin/bash
+
+stack setup
+stack install \
+    unordered-containers
