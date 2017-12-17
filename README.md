@@ -2,4 +2,4 @@
 
 My solutions to the advent of code puzzles
 
-To run a given puzzle, do `stack runghc Day#.hs`.
+To run a given puzzle, do `./run <day number>`.
