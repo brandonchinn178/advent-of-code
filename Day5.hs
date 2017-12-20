@@ -1,8 +1,9 @@
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Main where
 
-import Data.HashMap.Lazy (HashMap, empty, lookupDefault, insert)
+import Data.HashMap.Lazy (HashMap)
+import qualified Data.HashMap.Lazy as HM
 
 import Utils
 
@@ -10,26 +11,26 @@ getPuzzle :: IO [Int]
 getPuzzle = (map read . lines) <$> readFile "day5.txt"
 
 type Values = HashMap Int Int
+type State = (Values, Int)
 
-data State = State
-  { values :: Values
-  , index :: Int
-  } deriving (Eq, Show)
+-- | The initial state.
+initState :: [Int] -> State
+initState list = (HM.fromList $ zip [0..] list, 0)
 
 -- | Get the next state given the current state.
-nextState :: (Int -> Int) -> [Int] -> State -> State
-nextState incFunc list State{..} = State nextValues $ index + val
+nextState :: (Int -> Int) -> State -> Maybe State
+nextState incFunc (values, index) = nextState' <$> HM.lookup index values
   where
-    nextValues = insert index (incFunc val) values
-    val = lookupDefault (list !! index) index values
+    nextState' v = (HM.insert index (incFunc v) values, index + v)
 
 totalSteps :: (Int -> Int) -> [Int] -> Int
-totalSteps incFunc list = go $ State empty 0
+totalSteps incFunc list = count $ iterate (>>= nextState incFunc) initState'
   where
-    nextState' = nextState incFunc list
-    go s = if index s < length list
-      then 1 + (go $ nextState' s)
-      else 0
+    initState' = Just $ initState list
+    count l = count' (drop 1 l) 0 -- drop 1 because first state is initial state
+    count' (next:rest) acc = case next of
+      Nothing -> acc
+      Just _ -> count' rest $ acc + 1
 
 part1IncFunc :: Int -> Int
 part1IncFunc = (1 +)
