@@ -27,10 +27,10 @@ totalSteps :: (Int -> Int) -> [Int] -> Int
 totalSteps incFunc list = count $ iterate (>>= nextState incFunc) initState'
   where
     initState' = Just $ initState list
-    count l = count' (drop 1 l) 0 -- drop 1 because first state is initial state
+    count (_:l) = count' l 0 --  first state is initial state
     count' (next:rest) acc = case next of
       Nothing -> acc
-      Just _ -> count' rest $ acc + 1
+      Just _ -> count' rest $! acc + 1
 
 part1IncFunc :: Int -> Int
 part1IncFunc = (1 +)
