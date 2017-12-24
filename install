@@ -1,5 +1,8 @@
 #!/bin/bash
 
 stack setup
-stack install \
+PACKAGES=(
     unordered-containers
+    hashable
+)
+stack install "${PACKAGES[@]}"

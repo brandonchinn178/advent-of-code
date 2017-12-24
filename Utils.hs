@@ -1,3 +1,5 @@
+{-# LANGUAGE TupleSections #-}
+
 module Utils where
 
 import Control.Monad (when)
@@ -15,12 +17,16 @@ check label f cases = do
   putStrLn $ "\nTesting " ++ label ++ ":"
   mapM_ checkCase cases
   where
-    checkCase (input, expected) = check' input expected $ f input
+    checkCase (input, expected) = do
+      putStrLn $ "- " ++ show input ++ " -> " ++ show expected
+      let result = f input
+      when (expected /= result) $ fail $ "Check failed: got " ++ show result
 
-check' :: (Show a, Show b, Eq b) => a -> b -> b -> IO ()
-check' input expected result = do
-  putStrLn $ "- " ++ show input ++ " -> " ++ show expected
-  when (expected /= result) $ fail $ "Check failed: got " ++ show result
+check' :: String -> [Bool] -> IO ()
+check' label = assert label . map (, True)
+
+assert :: (Show a, Eq a) => String -> [(a, a)] -> IO ()
+assert label = check label id
 
 solve :: Show a => a -> IO ()
 solve result = do
