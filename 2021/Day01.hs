@@ -5,7 +5,7 @@ stack script --resolver lts-18.18
 
 main :: IO ()
 main = do
-  input <- map (read @Int) . lines <$> readFile "Day1.txt"
+  input <- map (read @Int) . lines <$> readFile "Day01.txt"
 
   -- part 1
   print $ getNumIncreases input
