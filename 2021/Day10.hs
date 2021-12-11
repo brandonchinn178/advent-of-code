@@ -4,6 +4,7 @@ stack script --resolver lts-18.18
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
+import Data.List (sort)
 import Data.Maybe (listToMaybe, mapMaybe)
 
 main :: IO ()
@@ -12,14 +13,29 @@ main = do
 
   -- part 1
   let getCorruptedScore = \case
-        Corrupted{_actual = Token{tokenType}} -> Just (getPoints tokenType)
+        Corrupted{_actual = Token{tokenType}} -> Just (getCorruptedPoints tokenType)
         _ -> Nothing
-      getPoints = \case
+      getCorruptedPoints = \case
         PAREN -> 3
         BRACK -> 57
         BRACE -> 1197
         ANGLE -> 25137
   print $ sum $ mapMaybe (getCorruptedScore . checkLine) input
+
+  -- part 2
+  let getMissingScore = \case
+        Incomplete{_missingTokens = tokens} ->
+          Just $
+            foldl (\acc x -> acc * 5 + x) 0 $
+              map (getMissingPoints . tokenType) tokens
+        _ -> Nothing
+      getMissingPoints = \case
+        PAREN -> 1
+        BRACK -> 2
+        BRACE -> 3
+        ANGLE -> 4
+      getMedian xs = sort xs !! (length xs `div` 2)
+  print $ getMedian $ mapMaybe (getMissingScore . checkLine) input
 
 data Token = Token
   { tokenType :: TokenType
@@ -52,6 +68,8 @@ flipToken token = token{isOpen = not $ isOpen token}
 data CheckResult
   = Valid
   | Incomplete
+      { _missingTokens :: [Token]
+      }
   | Corrupted
       { _expected :: Maybe Token
       , _actual :: Token
@@ -63,11 +81,11 @@ checkLine = go []
   where
     go = curry $ \case
       ([], []) -> Valid
-      (_, []) -> Incomplete
-      (hist, t : ts) | isOpen t -> go (t : hist) ts
-      (t1 : hist, t2 : ts) | flipToken t1 == t2 -> go hist ts
-      (hist, t : _) ->
+      (expected, []) -> Incomplete{_missingTokens = expected}
+      (expected, t : ts) | isOpen t -> go (flipToken t : expected) ts
+      (t' : expected, t : ts) | t == t' -> go expected ts
+      (expected, t : _) ->
         Corrupted
-          { _expected = flipToken <$> listToMaybe hist
+          { _expected = listToMaybe expected
           , _actual = t
           }
