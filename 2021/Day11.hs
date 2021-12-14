@@ -1,7 +1,6 @@
 {-
 stack script --resolver lts-18.18
   --package containers
-  --package vector
 -}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE TupleSections #-}
@@ -13,12 +12,10 @@ import Data.List (group, sort)
 import Data.Maybe (mapMaybe)
 import Data.Map qualified as Map
 import Data.Set qualified as Set
-import Data.Vector (Vector, (!?))
-import Data.Vector qualified as Vector
 
 main :: IO ()
 main = do
-  input <- matrixFromList . map (map digitToInt) . lines <$> readFile "Day11.txt"
+  input <- Matrix . map (map digitToInt) . lines <$> readFile "Day11.txt"
 
   -- part 1
   let (_, numFlashes) = simulate 100 input
@@ -44,30 +41,32 @@ runStep (m0, numFlashes) =
 
 {-- Matrix --}
 
-newtype Matrix a = Matrix {unMatrix :: Vector (Vector a)}
+newtype Matrix a = Matrix {unMatrix :: [[a]]}
   deriving (Show)
 
 matrixShow :: Show a => Matrix a -> String
-matrixShow = unlines . map (concatMap show . Vector.toList) . Vector.toList . unMatrix
+matrixShow = unlines . map (concatMap show) . unMatrix
 
 type Coordinate = (Int, Int)
 
-matrixFromList :: [[a]] -> Matrix a
-matrixFromList = Matrix . Vector.fromList . map Vector.fromList
-
 matrixGet :: Matrix a -> Coordinate -> Maybe a
-matrixGet m (x, y) = ((!? y) >=> (!? x)) . unMatrix $ m
+matrixGet m (x, y) = (getIndex y >=> getIndex x) . unMatrix $ m
+  where
+    getIndex i xs = if 0 <= i && i < length xs then Just (xs !! i) else Nothing
 
 matrixMap :: (a -> b) -> Matrix a -> Matrix b
-matrixMap f = Matrix . Vector.map (Vector.map f) . unMatrix
+matrixMap f = Matrix . map (map f) . unMatrix
 
 matrixIMap :: (Coordinate -> a -> b) -> Matrix a -> Matrix b
 matrixIMap f = Matrix . go . unMatrix
   where
-    go = Vector.imap $ \y -> Vector.imap $ \x -> f (x, y)
+    go = imap $ \y -> imap $ \x -> f (x, y)
+
+    imap :: (Int -> a -> b) -> [a] -> [b]
+    imap f = zipWith f [0 ..]
 
 matrixElems :: Matrix a -> [(Coordinate, a)]
-matrixElems = Vector.toList . Vector.concat . Vector.toList . unMatrix . matrixIMap (,)
+matrixElems = concat . unMatrix . matrixIMap (,)
 
 matrixNeighbors :: Matrix a -> Coordinate -> [(Coordinate, a)]
 matrixNeighbors m (x, y) =
