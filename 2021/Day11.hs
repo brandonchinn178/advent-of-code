@@ -18,11 +18,21 @@ main = do
   input <- Matrix . map (map digitToInt) . lines <$> readFile "Day11.txt"
 
   -- part 1
-  let (_, numFlashes) = simulate 100 input
-  print numFlashes
+  print $ snd $ simulate input !! 100
 
-simulate :: Int -> Matrix Int -> (Matrix Int, Int)
-simulate steps m = iterate runStep (m, 0) !! steps
+  -- part 2
+  print $ firstSimultaneousFlash input
+
+simulate :: Matrix Int -> [(Matrix Int, Int)]
+simulate m = iterate runStep (m, 0)
+
+firstSimultaneousFlash :: Matrix Int -> Int
+firstSimultaneousFlash m =
+  case filter isSimultaneous $ zip (simulate m) [0 ..] of
+    [] -> error "reached end of infinite list?"
+    (_, step) : _ -> step
+  where
+    isSimultaneous ((Matrix m', _), _) = all (all (== 0)) m'
 
 runStep :: (Matrix Int, Int) -> (Matrix Int, Int)
 runStep (m0, numFlashes) =
