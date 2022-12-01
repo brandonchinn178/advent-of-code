@@ -21,3 +21,7 @@ should be fairly standard libraries).
 ## 2021
 
 `cd` into the `2021` directory and run `stack <file>`.
+
+## 2022
+
+`cd` into the `2022` directory and run `make DAY=DayX`.
