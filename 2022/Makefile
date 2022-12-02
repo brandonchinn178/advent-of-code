@@ -6,10 +6,14 @@ $(OUTPUTDIR)/%.o: %.c
 	@mkdir -p $(@D)
 	gcc $(FLAGS) -o $@ -c $<
 
-$(OUTPUTDIR)/Day%: Day%.c $(OUTPUTDIR)/utils.o
-	gcc $(FLAGS) -o $@ $^
+$(OUTPUTDIR)/Day%: Day%.c utils.h $(OUTPUTDIR)/utils.o
+	@mkdir -p $(@D)
+	gcc $(FLAGS) -o $@ $< $(OUTPUTDIR)/utils.o
 
-all: $(OUTPUTDIR)/$(DAY)
+all: run
+
+.PHONY: run
+run: $(OUTPUTDIR)/$(DAY)
 	$<
 
 .PHONY: sample
