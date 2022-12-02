@@ -14,11 +14,11 @@ all: run
 
 .PHONY: run
 run: $(OUTPUTDIR)/$(DAY)
-	$<
+	$< < data/$(DAY).txt
 
 .PHONY: sample
 sample: $(OUTPUTDIR)/$(DAY)
-	$< sample
+	$< < data/$(DAY)-sample.txt
 
 clean:
 	rm -rf $(OUTPUTDIR)

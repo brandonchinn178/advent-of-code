@@ -1,5 +1,3 @@
-#include <string.h>
-
 #include "./utils.h"
 
 typedef enum {
@@ -66,52 +64,36 @@ static RPS get_shape_for_outcome(RPS opp, Outcome outcome) {
 }
 
 int main(int argc, char **argv) {
-    char* input = READ_INPUT("Day02");
-    Lines lines = split_lines(input);
+    char* line = NULL;
+    size_t size = 0;
+    size_t line_len;
 
-    // part 1
     int part1_score = 0;
-    for (int i = 0; i < lines.length; i++) {
-        char* line = get_line(lines, i);
-        if (strlen(line) == 0) {
-            continue;
-        }
-
-        char opp_sym, me_sym;
-        sscanf(line, "%c %c", &opp_sym, &me_sym);
-
-        RPS me = parse_rps(me_sym);
-        RPS opp = parse_rps(opp_sym);
-        Outcome outcome = get_outcome(me, opp);
-        part1_score += get_shape_score(me);
-        part1_score += get_outcome_score(outcome);
-
-        free(line);
-    }
-    printf("Part 1 score: %d\n", part1_score);
-
-    // part 2
     int part2_score = 0;
-    for (int i = 0; i < lines.length; i++) {
-        char* line = get_line(lines, i);
-        if (strlen(line) == 0) {
+
+    while ((line_len = getline(&line, &size, stdin)) != -1) {
+        if (line_len == 0) {
             continue;
         }
-
-        char opp_sym, outcome_sym;
-        sscanf(line, "%c %c", &opp_sym, &outcome_sym);
-
+        char opp_sym, other_sym;
+        sscanf(line, "%c %c", &opp_sym, &other_sym);
         RPS opp = parse_rps(opp_sym);
-        Outcome outcome = parse_outcome(outcome_sym);
-        RPS me = get_shape_for_outcome(opp, outcome);
-        part2_score += get_shape_score(me);
-        part2_score += get_outcome_score(outcome);
 
-        free(line);
+        // part 1
+        RPS me1 = parse_rps(other_sym);
+        Outcome outcome1 = get_outcome(me1, opp);
+        part1_score += get_shape_score(me1);
+        part1_score += get_outcome_score(outcome1);
+
+        // part 2
+        Outcome outcome2 = parse_outcome(other_sym);
+        RPS me2 = get_shape_for_outcome(opp, outcome2);
+        part2_score += get_shape_score(me2);
+        part2_score += get_outcome_score(outcome2);
     }
+
+    printf("Part 1 score: %d\n", part1_score);
     printf("Part 2 score: %d\n", part2_score);
 
-    free_lines(lines);
-    free(input);
     return 0;
 }

@@ -1,93 +1,16 @@
-#include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "./utils.h"
-
-char* freadall(const char* filename) {
-    FILE* fp = fopen(filename, "r");
-    if (!fp) {
-        return NULL;
-    }
-
-    fseek(fp, 0, SEEK_END);
-    int fsize = ftell(fp);
-    rewind(fp);
-
-    char* fcontent = (char*) malloc(fsize * sizeof(char));
-    fread(fcontent, 1, fsize, fp);
-
-    fclose(fp);
-
-    return fcontent;
-}
-
-/***** Lines *****/
-
-void free_lines(Lines lines) {
-    free(lines.lines);
-}
-
-Lines split_lines(char* s) {
-    int s_len = strlen(s);
-
-    int num_lines = 1;
-    for (int i = 0; i < s_len; i++) {
-        if (s[i] == '\n') {
-            num_lines++;
-        }
-    }
-
-    char** lines = malloc(num_lines * sizeof(char*));
-
-    char* buf_start = s;
-    int buf_len = 0;
-    int curr_line = 0;
-    for (int i = 0; i <= s_len; i++) {
-        if (i == s_len || s[i] == '\n') {
-            lines[curr_line] = buf_start;
-            curr_line++;
-
-            // skip '\n' character
-            buf_start = buf_start + buf_len + 1;
-            buf_len = 0;
-        } else {
-            buf_len++;
-        }
-    }
-
-    return (Lines) { .length = num_lines, .lines = lines };
-}
-
-char* get_line(Lines lines, int i) {
-    char* line = lines.lines[i];
-
-    size_t line_len;
-    if (i == lines.length - 1) {
-        line_len = strlen(line);
-    } else {
-        char* next_line = lines.lines[i + 1];
-        line_len = next_line - line - 1;
-    }
-
-    char* res = malloc(line_len * sizeof(char) + 1);
-    memcpy(res, line, line_len * sizeof(char));
-    res[line_len] = '\0';
-    return res;
-}
 
 /***** Sorting *****/
 
-static void merge_sort_inplace(int* arr, int l, int r) {
+static void merge_sort_inplace(int* arr, int l, int r, Ordering ord) {
     if (l >= r) {
         return;
     }
 
     int total = r - l;
     int m = l + total / 2;
-    merge_sort_inplace(arr, l, m);
-    merge_sort_inplace(arr, m + 1, r);
+    merge_sort_inplace(arr, l, m, ord);
+    merge_sort_inplace(arr, m + 1, r, ord);
 
     // copy data to temp arrays
     int num_l = m - l + 1, num_r = r - m;
@@ -103,23 +26,27 @@ static void merge_sort_inplace(int* arr, int l, int r) {
     int i = 0;
     int j = 0;
     while (i + j <= total) {
-        int k = l + i + j;
+        int use_l;
         if (i >= num_l) {
-            arr[k] = arr_r[j];
-            j++;
+            use_l = false;
         } else if (j >= num_r) {
-            arr[k] = arr_l[i];
-            i++;
-        } else if (arr_l[i] <= arr_r[j]) {
-            arr[k] = arr_l[i];
-            i++;
+            use_l = true;
         } else {
-            arr[k] = arr_r[j];
-            j++;
+            switch (ord) {
+                case ASC: use_l = arr_l[i] <= arr_r[j]; break;
+                case DESC: use_l = arr_l[i] >= arr_r[j]; break;
+            }
+        }
+
+        int k = l + i + j;
+        if (use_l) {
+            arr[k] = arr_l[i]; i++;
+        } else {
+            arr[k] = arr_r[j]; j++;
         }
     }
 }
 
-void sort_list_inplace(int* arr, int len) {
-    merge_sort_inplace(arr, 0, len - 1);
+void sort_list_inplace(int* arr, int len, Ordering ord) {
+    merge_sort_inplace(arr, 0, len - 1, ord);
 }
