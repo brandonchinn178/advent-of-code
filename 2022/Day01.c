@@ -2,15 +2,14 @@
 
 int main(int argc, char **argv) {
     char* line = NULL;
-    size_t size = 0;
     size_t line_len = 0;
 
     // {#1 elf, #2 elf, #3 elf, current elf}
     int calories[4] = {0};
 
     while (line_len != -1) {
-        line_len = getline(&line, &size, stdin);
-        if (line_len == -1 || line[0] == '\n') {
+        line_len = get_line(&line, stdin);
+        if (line_len == -1 || line_len == 0) {
             sort_list_inplace(calories, 4, DESC);
             calories[3] = 0;
         } else {

@@ -65,16 +65,11 @@ static RPS get_shape_for_outcome(RPS opp, Outcome outcome) {
 
 int main(int argc, char **argv) {
     char* line = NULL;
-    size_t size = 0;
-    size_t line_len;
 
     int part1_score = 0;
     int part2_score = 0;
 
-    while ((line_len = getline(&line, &size, stdin)) != -1) {
-        if (line_len == 0) {
-            continue;
-        }
+    while (get_line(&line, stdin) != -1) {
         char opp_sym, other_sym;
         sscanf(line, "%c %c", &opp_sym, &other_sym);
         RPS opp = parse_rps(opp_sym);
