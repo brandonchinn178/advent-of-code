@@ -10,12 +10,10 @@
         exit(1);
 
     /***** Files *****/
-    #ifdef SAMPLE
-        #define INPUT_SUFFIX "-sample"
-    #else
-        #define INPUT_SUFFIX ""
-    #endif
-    #define READ_INPUT(day) freadall("data/" day INPUT_SUFFIX ".txt")
+    #define READ_INPUT(day) \
+        argv[1] && strcmp(argv[1], "sample") == 0 \
+            ? freadall("data/" day "-sample.txt") \
+            : freadall("data/" day ".txt")
     extern char* freadall(const char* filename);
 
     /***** Lines *****/
