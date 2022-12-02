@@ -1,0 +1,1 @@
+Run `stack <file>`.
