@@ -4,7 +4,18 @@
     #include <stdio.h>
     #include <stdlib.h>
 
+    /***** Errors *****/
+    #define ABORT(msg, ...) \
+        fprintf(stderr, "%s:%d: " msg "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
+        exit(1);
+
     /***** Files *****/
+    #ifdef SAMPLE
+        #define INPUT_SUFFIX "-sample"
+    #else
+        #define INPUT_SUFFIX ""
+    #endif
+    #define READ_INPUT(day) freadall("data/" day INPUT_SUFFIX ".txt")
     extern char* freadall(const char* filename);
 
     /***** Lines *****/

@@ -25,3 +25,5 @@ should be fairly standard libraries).
 ## 2022
 
 `cd` into the `2022` directory and run `make DAY=DayX`.
+
+To run with the sample input, run `make sample DAY=DayX`.
