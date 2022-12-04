@@ -1,6 +1,6 @@
 OUTPUTDIR = ./build
 DAY = Day01
-FLAGS = -Wall -Werror -O3
+FLAGS = -Wall -O3
 
 $(OUTPUTDIR)/%.o: %.c
 	@mkdir -p $(@D)
