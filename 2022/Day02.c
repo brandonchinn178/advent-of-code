@@ -64,6 +64,8 @@ static RPS get_shape_for_outcome(RPS opp, Outcome outcome) {
 }
 
 int main(int argc, char **argv) {
+    START_TIMER();
+
     char* line = NULL;
 
     int part1_score = 0;
@@ -90,5 +92,6 @@ int main(int argc, char **argv) {
     printf("Part 1 score: %d\n", part1_score);
     printf("Part 2 score: %d\n", part2_score);
 
+    END_TIMER();
     return 0;
 }

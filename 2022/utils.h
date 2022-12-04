@@ -6,12 +6,21 @@
     #include <stdio.h>
     #include <stdlib.h>
     #include <string.h>
+    #include <time.h>
 
     /***** Errors *****/
 
     #define ABORT(msg, ...) \
         fprintf(stderr, "%s:%d: " msg "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
         exit(1);
+
+    /***** Timer *****/
+
+    #define START_TIMER() \
+        clock_t start_time = clock();
+    #define END_TIMER() \
+        double elapsed_time = (double) (clock() - start_time) / CLOCKS_PER_SEC; \
+        printf("Done in %f seconds\n", elapsed_time);
 
     /***** Files *****/
 

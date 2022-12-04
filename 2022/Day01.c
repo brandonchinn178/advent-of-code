@@ -1,6 +1,8 @@
 #include "./utils.h"
 
 int main(int argc, char **argv) {
+    START_TIMER();
+
     char* line = NULL;
     size_t line_len = 0;
 
@@ -26,5 +28,6 @@ int main(int argc, char **argv) {
         calories[0] + calories[1] + calories[2]
     );
 
+    END_TIMER();
     return 0;
 }
