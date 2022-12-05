@@ -12,6 +12,12 @@ size_t get_line(char** line, FILE* stream) {
     return line_len;
 }
 
+/***** Strings *****/
+
+bool is_prefix(const char* s, const char* pre) {
+    return strncmp(pre, s, strlen(pre)) == 0;
+}
+
 /***** Sorting *****/
 
 static void merge_sort_inplace(int* arr, int l, int r, Ordering ord) {

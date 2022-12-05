@@ -30,6 +30,10 @@
      */
     extern size_t get_line(char** buf, FILE* stream);
 
+    /***** Strings *****/
+
+    extern bool is_prefix(const char* s, const char* pre);
+
     /***** Sorting *****/
 
     typedef enum { ASC, DESC } Ordering;
