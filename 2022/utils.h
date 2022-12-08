@@ -34,6 +34,18 @@
 
     extern bool is_prefix(const char* s, const char* pre);
 
+    /***** Lists *****/
+
+    typedef struct {
+        void** contents;
+        size_t length;
+        size_t _contents_size;
+    } List;
+    extern List list_empty();
+    extern List list_init(size_t size);
+    extern void list_append(List* list, void* item);
+    extern void* list_get(List list, size_t index);
+
     /***** Sorting *****/
 
     typedef enum { ASC, DESC } Ordering;

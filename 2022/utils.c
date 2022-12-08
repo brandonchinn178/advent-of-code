@@ -18,6 +18,34 @@ bool is_prefix(const char* s, const char* pre) {
     return strncmp(pre, s, strlen(pre)) == 0;
 }
 
+/***** Lists *****/
+
+List list_empty() {
+    return list_init(10);
+}
+
+List list_init(size_t size) {
+    void** contents = malloc(size * sizeof(void*));
+    return (List) {
+        .contents = contents,
+        .length = 0,
+        ._contents_size = size,
+    };
+}
+
+void list_append(List* list, void* item) {
+    if (list->length == list->_contents_size) {
+        list->_contents_size *= 2;
+        list->contents = realloc(list->contents, list->_contents_size * sizeof(void*));
+    }
+    list->contents[list->length] = item;
+    list->length++;
+}
+
+void* list_get(List list, size_t index) {
+    return list.contents[index];
+}
+
 /***** Sorting *****/
 
 static void merge_sort_inplace(int* arr, int l, int r, Ordering ord) {
