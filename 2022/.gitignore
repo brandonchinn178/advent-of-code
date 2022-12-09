@@ -1,1 +1,4 @@
 /build/
+/data/*.txt
+!/data/*-sample.txt
+
