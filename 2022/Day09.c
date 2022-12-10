@@ -6,7 +6,7 @@ typedef struct {
     int y;
 } Point;
 
-#define POINT(x0, y0) ((Point) { .x = x0, .y = y0 })
+static Point origin_point = (Point) { .x = 0, .y = 0 };
 
 static Point* copy_point(Point *point) {
     Point *copy = malloc(sizeof(Point));
@@ -32,11 +32,20 @@ int main(int argc, char **argv) {
 
     char *line = NULL;
 
-    Point head = POINT(0, 0), tail = POINT(0, 0);
+    Point knots[10];
+    for (int i = 0; i < 10; i++) {
+        knots[i] = origin_point;
+    }
+    Point *head = &knots[0];
+    Point *tail1 = &knots[1];
+    Point *tail9 = &knots[9];
+
     int x_min = 0, x_max = 0, y_min = 0, y_max = 0;
 
-    List tail_positions = list_init(1000);
-    list_append(&tail_positions, copy_point(&tail));
+    List positions_tail1 = list_init(1000);
+    List positions_tail9 = list_init(1000);
+    list_append(&positions_tail1, &origin_point);
+    list_append(&positions_tail9, &origin_point);
 
     while (get_line(&line, stdin) != -1) {
         char dir;
@@ -52,38 +61,49 @@ int main(int argc, char **argv) {
         }
 
         for (int i = 0; i < steps; i++) {
-            head.x += dx;
-            head.y += dy;
-            update_tail(head, &tail);
-            if (head.x < x_min) x_min = head.x;
-            if (head.x > x_max) x_max = head.x;
-            if (head.y < y_min) y_min = head.y;
-            if (head.y > y_max) y_max = head.y;
+            head->x += dx;
+            head->y += dy;
+            for (int j = 1; j < 10; j++) {
+                update_tail(knots[j - 1], &knots[j]);
+            }
 
-            list_append(&tail_positions, copy_point(&tail));
+            list_append(&positions_tail1, copy_point(tail1));
+            list_append(&positions_tail9, copy_point(tail9));
         }
+        if (head->x < x_min) x_min = head->x;
+        if (head->x > x_max) x_max = head->x;
+        if (head->y < y_min) y_min = head->y;
+        if (head->y > y_max) y_max = head->y;
     }
 
     int width = x_max - x_min;
     int height = y_max - y_min;
-    bool seen[height][width];
+    bool seen1[height][width], seen9[height][width];
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) {
-            seen[j][i] = false;
+            seen1[j][i] = false;
+            seen9[j][i] = false;
         }
     }
 
-    int unique_tail_positions = 0;
-    for (int i = 0; i < tail_positions.length; i++) {
-        Point pos = *((Point *) list_get(tail_positions, i));
-        int x = x_min + pos.x, y = y_min + pos.y;
-        if (seen[y][x]) {
-            continue;
+    int unique_tail1_positions = 0;
+    int unique_tail9_positions = 0;
+    for (int i = 0; i < positions_tail1.length; i++) {
+        Point *pos1 = list_get(positions_tail1, i);
+        int x1 = x_min + pos1->x, y1 = y_min + pos1->y;
+        if (!seen1[y1][x1]) {
+            seen1[y1][x1] = true;
+            unique_tail1_positions++;
         }
-        seen[y][x] = true;
-        unique_tail_positions++;
+        Point *pos9 = list_get(positions_tail9, i);
+        int x9 = x_min + pos9->x, y9 = y_min + pos9->y;
+        if (!seen9[y9][x9]) {
+            seen9[y9][x9] = true;
+            unique_tail9_positions++;
+        }
     }
-    printf("Part 1: %d\n", unique_tail_positions);
+    printf("Part 1: %d\n", unique_tail1_positions);
+    printf("Part 2: %d\n", unique_tail9_positions);
 
     END_TIMER();
     return 0;
