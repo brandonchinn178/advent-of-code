@@ -9,7 +9,7 @@ import Data.Maybe (listToMaybe, mapMaybe)
 
 main :: IO ()
 main = do
-  input <- map (map parseToken) . lines <$> readFile "Day10.txt"
+  input <- map (map parseToken) . lines <$> readFile "data/Day10.txt"
 
   -- part 1
   let getCorruptedScore = \case

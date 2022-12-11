@@ -9,7 +9,7 @@ import Data.Text qualified as Text
 
 main :: IO ()
 main = do
-  input <- map (read @Int) . splitOn "," <$> readFile "Day07.txt"
+  input <- map (read @Int) . splitOn "," <$> readFile "data/Day07.txt"
 
   -- part 1
   print $ getBestFuelCostWith id input

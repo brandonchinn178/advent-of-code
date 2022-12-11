@@ -15,7 +15,7 @@ import Data.Set qualified as Set
 
 main :: IO ()
 main = do
-  input <- Matrix . map (map digitToInt) . lines <$> readFile "Day11.txt"
+  input <- Matrix . map (map digitToInt) . lines <$> readFile "data/Day11.txt"
 
   -- part 1
   print $ snd $ simulate input !! 100

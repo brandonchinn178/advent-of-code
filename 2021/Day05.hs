@@ -16,7 +16,7 @@ import Text.Read (readMaybe)
 
 main :: IO ()
 main = do
-  input <- map parseLine . Text.lines <$> Text.readFile "Day05.txt"
+  input <- map parseLine . Text.lines <$> Text.readFile "data/Day05.txt"
 
   let countOverlaps = length . filter ((>= 2) . snd) . toHistogram
 

@@ -21,7 +21,7 @@ import Data.Tuple (swap)
 
 main :: IO ()
 main = do
-  input <- map parsePuzzle . lines <$> readFile "Day08.txt"
+  input <- map parsePuzzle . lines <$> readFile "data/Day08.txt"
 
   -- part 1
   let uniqueNumWires = [2, 4, 3, 7] -- # of wires for 1, 4, 7, and 8

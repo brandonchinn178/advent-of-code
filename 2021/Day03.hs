@@ -9,7 +9,7 @@ import Data.List (foldl', transpose)
 
 main :: IO ()
 main = do
-  input <- map readBits . lines <$> readFile "Day03.txt"
+  input <- map readBits . lines <$> readFile "data/Day03.txt"
   let digits = [0 .. length (head input) - 1]
 
   -- part 1

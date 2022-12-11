@@ -15,7 +15,7 @@ import Data.Set qualified as Set
 
 main :: IO ()
 main = do
-  input <- Matrix . map (map digitToInt) . lines <$> readFile "Day09.txt"
+  input <- Matrix . map (map digitToInt) . lines <$> readFile "data/Day09.txt"
 
   let lowPoints = getLowPoints input
 

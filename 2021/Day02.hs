@@ -32,7 +32,7 @@ calcResult State{..} = position * depth
 
 main :: IO ()
 main = do
-  input <- map parseCommand . lines <$> readFile "Day02.txt"
+  input <- map parseCommand . lines <$> readFile "data/Day02.txt"
 
   let runWith f = print . calcResult . runCommands f $ input
 

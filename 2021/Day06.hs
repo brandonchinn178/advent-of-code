@@ -9,7 +9,7 @@ import Data.Text qualified as Text
 
 main :: IO ()
 main = do
-  input <- map (read @Int) . splitOn "," <$> readFile "Day06.txt"
+  input <- map (read @Int) . splitOn "," <$> readFile "data/Day06.txt"
 
   let countTotalFishAtDay x = sum $ map (\c -> totalFishFrom c !! x) input
 

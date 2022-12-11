@@ -20,7 +20,7 @@ import Data.Text.IO qualified as Text
 
 main :: IO ()
 main = do
-  (nums, boards) <- parseInput <$> Text.readFile "Day04.txt"
+  (nums, boards) <- parseInput <$> Text.readFile "data/Day04.txt"
 
   -- part 1
   let fastestRound = getWinningRoundInfoBy (Down . roundNum) nums boards
