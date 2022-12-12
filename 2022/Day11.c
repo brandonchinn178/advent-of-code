@@ -36,6 +36,18 @@ static void add_item(MonkeyItems *monkey, int item) {
     monkey->items_length++;
 }
 
+static MonkeyItems copy_items(MonkeyItems monkey_items) {
+    size_t items_length = monkey_items.items_length;
+    size_t items_bytes = items_length * sizeof(int);
+    int *items = malloc(items_bytes);
+    memcpy(items, monkey_items.items, items_bytes);
+    return (MonkeyItems) {
+        .items = items,
+        .items_length = items_length,
+        .items_capacity = items_length,
+    };
+}
+
 static int apply_operation(Operation op, int x) {
     switch (op.common.type) {
         case OP_ADD:
@@ -56,7 +68,7 @@ int main(int argc, char **argv) {
     // hardcoded to number of monkeys in input
     size_t monkeys_length = 8;
     MonkeyInfo monkeys[monkeys_length];
-    MonkeyItems all_monkeys_items[monkeys_length];
+    MonkeyItems initial_items[monkeys_length];
     int curr_monkey = 0;
 
     while ((line_len = get_line(&line, stdin)) != -1) {
@@ -65,13 +77,13 @@ int main(int argc, char **argv) {
             sscanf(line, "Monkey %d:", &curr_monkey);
             size_t initial_capacity = 10;
             int *items = malloc(initial_capacity * sizeof(int));
-            all_monkeys_items[curr_monkey] = (MonkeyItems) {
+            initial_items[curr_monkey] = (MonkeyItems) {
                 .items = items,
                 .items_length = 0,
                 .items_capacity = initial_capacity,
             };
         } else if (is_prefix(line, "  Starting items:")) {
-            MonkeyItems *monkey_items = &all_monkeys_items[curr_monkey];
+            MonkeyItems *monkey_items = &initial_items[curr_monkey];
             int i = 18;
             int curr_item = 0;
             while (i <= line_len) {
@@ -115,14 +127,16 @@ int main(int argc, char **argv) {
     int num_monkeys = curr_monkey + 1;
 
     // part 1
-    int monkey_item_count[monkeys_length];
-    for (int i = 0; i < monkeys_length; i++) {
+    MonkeyItems part1_items[num_monkeys];
+    int monkey_item_count[num_monkeys];
+    for (int i = 0; i < num_monkeys; i++) {
+        part1_items[i] = copy_items(initial_items[i]);
         monkey_item_count[i] = 0;
     }
     for (int i = 0; i < 20; i++) {
         for (int monkey_idx = 0; monkey_idx < num_monkeys; monkey_idx++) {
             MonkeyInfo *monkey = &monkeys[monkey_idx];
-            MonkeyItems *monkey_items = &all_monkeys_items[monkey_idx];
+            MonkeyItems *monkey_items = &part1_items[monkey_idx];
             for (int item_idx = 0; item_idx < monkey_items->items_length; item_idx++) {
                 monkey_item_count[monkey_idx]++;
                 int item = monkey_items->items[item_idx];
@@ -134,7 +148,7 @@ int main(int argc, char **argv) {
                 } else {
                     next_monkey = monkey->test_monkey_false;
                 }
-                add_item(&all_monkeys_items[next_monkey], item);
+                add_item(&part1_items[next_monkey], item);
             }
             monkey_items->items_length = 0;
         }
