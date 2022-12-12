@@ -59,6 +59,32 @@ static int apply_operation(Operation op, int x) {
     }
 }
 
+static void do_round(
+    int num_monkeys,
+    MonkeyInfo *monkeys,
+    MonkeyItems *monkeys_items,
+    int *monkey_counts
+) {
+    for (int monkey_idx = 0; monkey_idx < num_monkeys; monkey_idx++) {
+        MonkeyInfo *monkey = &monkeys[monkey_idx];
+        MonkeyItems *monkey_items = &monkeys_items[monkey_idx];
+        for (int item_idx = 0; item_idx < monkey_items->items_length; item_idx++) {
+            monkey_counts[monkey_idx]++;
+            int item = monkey_items->items[item_idx];
+            item = apply_operation(monkey->operation, item);
+            item /= 3;
+            int next_monkey;
+            if (item % monkey->test_modulus == 0) {
+                next_monkey = monkey->test_monkey_true;
+            } else {
+                next_monkey = monkey->test_monkey_false;
+            }
+            add_item(&monkeys_items[next_monkey], item);
+        }
+        monkey_items->items_length = 0;
+    }
+}
+
 int main(int argc, char **argv) {
     START_TIMER();
 
@@ -128,34 +154,16 @@ int main(int argc, char **argv) {
 
     // part 1
     MonkeyItems part1_items[num_monkeys];
-    int monkey_item_count[num_monkeys];
+    int part1_monkey_counts[num_monkeys];
     for (int i = 0; i < num_monkeys; i++) {
         part1_items[i] = copy_items(initial_items[i]);
-        monkey_item_count[i] = 0;
+        part1_monkey_counts[i] = 0;
     }
     for (int i = 0; i < 20; i++) {
-        for (int monkey_idx = 0; monkey_idx < num_monkeys; monkey_idx++) {
-            MonkeyInfo *monkey = &monkeys[monkey_idx];
-            MonkeyItems *monkey_items = &part1_items[monkey_idx];
-            for (int item_idx = 0; item_idx < monkey_items->items_length; item_idx++) {
-                monkey_item_count[monkey_idx]++;
-                int item = monkey_items->items[item_idx];
-                item = apply_operation(monkey->operation, item);
-                item /= 3;
-                int next_monkey;
-                if (item % monkey->test_modulus == 0) {
-                    next_monkey = monkey->test_monkey_true;
-                } else {
-                    next_monkey = monkey->test_monkey_false;
-                }
-                add_item(&part1_items[next_monkey], item);
-            }
-            monkey_items->items_length = 0;
-        }
+        do_round(num_monkeys, monkeys, part1_items, part1_monkey_counts);
     }
-
-    sort_list_inplace(monkey_item_count, num_monkeys, DESC);
-    printf("Part 1: %d\n", monkey_item_count[0] * monkey_item_count[1]);
+    sort_list_inplace(part1_monkey_counts, num_monkeys, DESC);
+    printf("Part 1: %d\n", part1_monkey_counts[0] * part1_monkey_counts[1]);
 
     END_TIMER();
     return 0;
