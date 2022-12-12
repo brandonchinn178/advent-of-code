@@ -14,18 +14,20 @@ typedef union {
 } Operation;
 
 typedef struct {
-    int* items;
-    size_t items_length;
-    size_t items_capacity;
-
     Operation operation;
 
     int test_modulus;
     int test_monkey_true;
     int test_monkey_false;
-} Monkey;
+} MonkeyInfo;
 
-static void add_item(Monkey *monkey, int item) {
+typedef struct {
+    int* items;
+    size_t items_length;
+    size_t items_capacity;
+} MonkeyItems;
+
+static void add_item(MonkeyItems *monkey, int item) {
     if (monkey->items_length == monkey->items_capacity) {
         monkey->items_capacity *= 2;
         monkey->items = realloc(monkey->items, monkey->items_capacity * sizeof(int));
@@ -45,34 +47,6 @@ static int apply_operation(Operation op, int x) {
     }
 }
 
-static void print_monkeys(Monkey *monkeys, int num_monkeys) {
-    for (int i = 0; i < num_monkeys; i++) {
-        Monkey monkey = monkeys[i];
-        printf("===== Monkey %d =====\n", i);
-        printf("Items:\n");
-        for (int j = 0; j < monkey.items_length; j++) {
-            printf("  %d\n", monkey.items[j]);
-        }
-        printf("Operation:\n");
-        switch (monkey.operation.common.type) {
-            case OP_ADD:
-                printf("  ADD %d\n", monkey.operation.add.arg);
-                break;
-            case OP_MULT:
-                printf("  MULT %d\n", monkey.operation.mult.arg);
-                break;
-            case OP_SQUARE:
-                printf("  SQUARE\n");
-        }
-        printf(
-            "Test: if divisible by %d, throw to monkey %d else %d\n",
-            monkey.test_modulus,
-            monkey.test_monkey_true,
-            monkey.test_monkey_false
-        );
-    }
-}
-
 int main(int argc, char **argv) {
     START_TIMER();
 
@@ -81,21 +55,23 @@ int main(int argc, char **argv) {
 
     // hardcoded to number of monkeys in input
     size_t monkeys_length = 8;
-    Monkey monkeys[monkeys_length];
+    MonkeyInfo monkeys[monkeys_length];
+    MonkeyItems all_monkeys_items[monkeys_length];
     int curr_monkey = 0;
 
     while ((line_len = get_line(&line, stdin)) != -1) {
-        Monkey *monkey = &monkeys[curr_monkey];
+        MonkeyInfo *monkey = &monkeys[curr_monkey];
         if (is_prefix(line, "Monkey")) {
             sscanf(line, "Monkey %d:", &curr_monkey);
             size_t initial_capacity = 10;
             int *items = malloc(initial_capacity * sizeof(int));
-            monkeys[curr_monkey] = (Monkey) {
+            all_monkeys_items[curr_monkey] = (MonkeyItems) {
                 .items = items,
                 .items_length = 0,
                 .items_capacity = initial_capacity,
             };
         } else if (is_prefix(line, "  Starting items:")) {
+            MonkeyItems *monkey_items = &all_monkeys_items[curr_monkey];
             int i = 18;
             int curr_item = 0;
             while (i <= line_len) {
@@ -104,7 +80,7 @@ int main(int argc, char **argv) {
                     curr_item = curr_item * 10 + (c - '0');
                     i++;
                 } else {
-                    add_item(monkey, curr_item);
+                    add_item(monkey_items, curr_item);
                     curr_item = 0;
                     i += 2;
                 }
@@ -145,10 +121,11 @@ int main(int argc, char **argv) {
     }
     for (int i = 0; i < 20; i++) {
         for (int monkey_idx = 0; monkey_idx < num_monkeys; monkey_idx++) {
-            Monkey *monkey = &monkeys[monkey_idx];
-            for (int item_idx = 0; item_idx < monkey->items_length; item_idx++) {
+            MonkeyInfo *monkey = &monkeys[monkey_idx];
+            MonkeyItems *monkey_items = &all_monkeys_items[monkey_idx];
+            for (int item_idx = 0; item_idx < monkey_items->items_length; item_idx++) {
                 monkey_item_count[monkey_idx]++;
-                int item = monkey->items[item_idx];
+                int item = monkey_items->items[item_idx];
                 item = apply_operation(monkey->operation, item);
                 item /= 3;
                 int next_monkey;
@@ -157,9 +134,9 @@ int main(int argc, char **argv) {
                 } else {
                     next_monkey = monkey->test_monkey_false;
                 }
-                add_item(&monkeys[next_monkey], item);
+                add_item(&all_monkeys_items[next_monkey], item);
             }
-            monkey->items_length = 0;
+            monkey_items->items_length = 0;
         }
     }
 
