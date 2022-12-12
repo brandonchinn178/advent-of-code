@@ -48,7 +48,7 @@ static MonkeyItems copy_items(MonkeyItems monkey_items) {
     };
 }
 
-static int apply_operation(Operation op, int x) {
+static uint64_t apply_operation(Operation op, uint64_t x) {
     switch (op.common.type) {
         case OP_ADD:
             return x + op.add.arg;
@@ -63,23 +63,26 @@ static void do_round(
     int num_monkeys,
     MonkeyInfo *monkeys,
     MonkeyItems *monkeys_items,
-    int *monkey_counts
+    int *monkey_counts,
+    int relief_factor,
+    int shared_modulus
 ) {
     for (int monkey_idx = 0; monkey_idx < num_monkeys; monkey_idx++) {
         MonkeyInfo *monkey = &monkeys[monkey_idx];
         MonkeyItems *monkey_items = &monkeys_items[monkey_idx];
         for (int item_idx = 0; item_idx < monkey_items->items_length; item_idx++) {
             monkey_counts[monkey_idx]++;
-            int item = monkey_items->items[item_idx];
+            uint64_t item = monkey_items->items[item_idx];
             item = apply_operation(monkey->operation, item);
-            item /= 3;
+            item /= relief_factor;
+            int new_item = item % shared_modulus;
             int next_monkey;
-            if (item % monkey->test_modulus == 0) {
+            if (new_item % monkey->test_modulus == 0) {
                 next_monkey = monkey->test_monkey_true;
             } else {
                 next_monkey = monkey->test_monkey_false;
             }
-            add_item(&monkeys_items[next_monkey], item);
+            add_item(&monkeys_items[next_monkey], new_item);
         }
         monkey_items->items_length = 0;
     }
@@ -152,6 +155,11 @@ int main(int argc, char **argv) {
     }
     int num_monkeys = curr_monkey + 1;
 
+    int shared_modulus = 1;
+    for (int i = 0; i < num_monkeys; i++) {
+        shared_modulus *= monkeys[i].test_modulus;
+    }
+
     // part 1
     MonkeyItems part1_items[num_monkeys];
     int part1_monkey_counts[num_monkeys];
@@ -160,10 +168,23 @@ int main(int argc, char **argv) {
         part1_monkey_counts[i] = 0;
     }
     for (int i = 0; i < 20; i++) {
-        do_round(num_monkeys, monkeys, part1_items, part1_monkey_counts);
+        do_round(num_monkeys, monkeys, part1_items, part1_monkey_counts, 3, shared_modulus);
     }
     sort_list_inplace(part1_monkey_counts, num_monkeys, DESC);
     printf("Part 1: %d\n", part1_monkey_counts[0] * part1_monkey_counts[1]);
+
+    // part 2
+    MonkeyItems part2_items[num_monkeys];
+    int part2_monkey_counts[num_monkeys];
+    for (int i = 0; i < num_monkeys; i++) {
+        part2_items[i] = copy_items(initial_items[i]);
+        part2_monkey_counts[i] = 0;
+    }
+    for (int i = 0; i < 10000; i++) {
+        do_round(num_monkeys, monkeys, part2_items, part2_monkey_counts, 1, shared_modulus);
+    }
+    sort_list_inplace(part2_monkey_counts, num_monkeys, DESC);
+    printf("Part 2: %llu\n", (uint64_t) part2_monkey_counts[0] * part2_monkey_counts[1]);
 
     END_TIMER();
     return 0;
