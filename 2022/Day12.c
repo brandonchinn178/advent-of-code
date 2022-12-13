@@ -49,14 +49,18 @@ int main(int argc, char **argv) {
     List buf = list_empty();
     list_append(&buf, end);
     List buf_next = list_empty();
-    int dist = 0;
+    int dist = 0, part1_dist = -1, part2_dist = -1;
     while (buf.length > 0) {
         for (int i = 0; i < buf.length; i++) {
             Point *point = list_get(buf, i);
             char c = point->label;
             int x = point->x, y = point->y;
 
+            if (c == 'a' && part2_dist == -1) {
+                part2_dist = dist;
+            }
             if (point == start) {
+                part1_dist = dist;
                 goto end;
             }
             if (seen[y][x]) {
@@ -96,7 +100,8 @@ int main(int argc, char **argv) {
     }
 
     end:
-    printf("Shortest distance: %d\n", dist);
+    printf("Part 1: %d\n", part1_dist);
+    printf("Part 2: %d\n", part2_dist);
 
     END_TIMER();
     return 0;
