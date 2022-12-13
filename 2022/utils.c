@@ -48,15 +48,15 @@ void* list_get(List list, size_t index) {
 
 /***** Sorting *****/
 
-static void merge_sort_inplace(int* arr, int l, int r, Ordering ord) {
+static void merge_sort_inplace(int* arr, int l, int r, Direction dir) {
     if (l >= r) {
         return;
     }
 
     int total = r - l;
     int m = l + total / 2;
-    merge_sort_inplace(arr, l, m, ord);
-    merge_sort_inplace(arr, m + 1, r, ord);
+    merge_sort_inplace(arr, l, m, dir);
+    merge_sort_inplace(arr, m + 1, r, dir);
 
     // copy data to temp arrays
     int num_l = m - l + 1, num_r = r - m;
@@ -78,7 +78,7 @@ static void merge_sort_inplace(int* arr, int l, int r, Ordering ord) {
         } else if (j >= num_r) {
             use_l = true;
         } else {
-            switch (ord) {
+            switch (dir) {
                 case ASC: use_l = arr_l[i] <= arr_r[j]; break;
                 case DESC: use_l = arr_l[i] >= arr_r[j]; break;
             }
@@ -93,6 +93,6 @@ static void merge_sort_inplace(int* arr, int l, int r, Ordering ord) {
     }
 }
 
-void sort_list_inplace(int* arr, int len, Ordering ord) {
-    merge_sort_inplace(arr, 0, len - 1, ord);
+void sort_list_inplace(int* arr, int len, Direction dir) {
+    merge_sort_inplace(arr, 0, len - 1, dir);
 }

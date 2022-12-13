@@ -48,6 +48,6 @@
 
     /***** Sorting *****/
 
-    typedef enum { ASC, DESC } Ordering;
-    extern void sort_list_inplace(int* arr, int len, Ordering ord);
+    typedef enum { ASC, DESC } Direction;
+    extern void sort_list_inplace(int* arr, int len, Direction dir);
 #endif
