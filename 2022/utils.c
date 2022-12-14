@@ -52,19 +52,26 @@ void* list_get(List list, size_t index) {
 
 /***** Sorting *****/
 
-static void merge_sort_inplace(int* arr, int l, int r, Direction dir) {
+static void merge_sort_inplace(
+    void* *arr,
+    int l,
+    int r,
+    Direction dir,
+    IsLessThan is_lt
+) {
     if (l >= r) {
         return;
     }
 
     int total = r - l;
     int m = l + total / 2;
-    merge_sort_inplace(arr, l, m, dir);
-    merge_sort_inplace(arr, m + 1, r, dir);
+    merge_sort_inplace(arr, l, m, dir, is_lt);
+    merge_sort_inplace(arr, m + 1, r, dir, is_lt);
 
     // copy data to temp arrays
     int num_l = m - l + 1, num_r = r - m;
-    int arr_l[num_l], arr_r[num_r];
+    void* arr_l[num_l];
+    void* arr_r[num_r];
     for (int i = 0; i < num_l; i++) {
         arr_l[i] = arr[l + i];
     }
@@ -83,8 +90,8 @@ static void merge_sort_inplace(int* arr, int l, int r, Direction dir) {
             use_l = true;
         } else {
             switch (dir) {
-                case ASC: use_l = arr_l[i] <= arr_r[j]; break;
-                case DESC: use_l = arr_l[i] >= arr_r[j]; break;
+                case ASC: use_l = is_lt(arr_l[i], arr_r[j]); break;
+                case DESC: use_l = !is_lt(arr_l[i], arr_r[j]); break;
             }
         }
 
@@ -97,6 +104,21 @@ static void merge_sort_inplace(int* arr, int l, int r, Direction dir) {
     }
 }
 
+static bool is_lt_int(int *l, int *r) {
+    return *l < *r;
+}
+
 void sort_int_list_inplace(int* arr, int len, Direction dir) {
-    merge_sort_inplace(arr, 0, len - 1, dir);
+    void *list[len];
+    for (int i = 0; i < len; i++) {
+        list[i] = &arr[i];
+    }
+    merge_sort_inplace(list, 0, len - 1, dir, (IsLessThan) is_lt_int);
+    for (int i = 0; i < len; i++) {
+        arr[i] = *((int*) list[i]);
+    }
+}
+
+void sort_list_inplace(List list, Direction dir, IsLessThan is_lt) {
+    merge_sort_inplace(list.contents, 0, list.length - 1, dir, is_lt);
 }

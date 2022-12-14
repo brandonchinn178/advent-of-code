@@ -50,5 +50,7 @@
     /***** Sorting *****/
 
     typedef enum { ASC, DESC } Direction;
+    typedef bool (*IsLessThan)(void *l, void *r);
     extern void sort_int_list_inplace(int* arr, int len, Direction dir);
+    extern void sort_list_inplace(List arr, Direction dir, IsLessThan is_lt);
 #endif
