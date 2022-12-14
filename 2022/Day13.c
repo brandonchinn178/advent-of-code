@@ -1,0 +1,248 @@
+#include "./utils.h"
+
+typedef enum { LT, EQ, GT } Ordering;
+
+/***** Streams *****/
+
+typedef enum {
+  STREAM_LAZY,
+  STREAM_SINGLE_INT,
+} StreamType;
+
+typedef struct {
+    StreamType type;
+    char *contents;
+    int *index;
+} StreamLazy;
+
+typedef struct {
+    StreamType type;
+    int value;
+    bool consumed;
+} StreamSingle;
+
+typedef union {
+    struct { StreamType type; } common;
+
+    // represents a stream generated from the given list, where
+    // contents[*index] represents the current state of the stream.
+    StreamLazy lazy;
+
+    // represents a stream with one element: value.
+    StreamSingle single;
+} Stream;
+
+static Stream stream_init(char *contents) {
+    int *index = malloc(sizeof(int));
+    return (Stream) {
+        .lazy = {
+            .type = STREAM_LAZY,
+            .contents = contents,
+            .index = index,
+        },
+    };
+}
+
+static Stream stream_single(int value) {
+    return (Stream) {
+        .single = {
+            .type = STREAM_SINGLE_INT,
+            .value = value,
+            .consumed = false,
+        },
+    };
+}
+
+static void stream_lazy_advance(StreamLazy stream) {
+    (*stream.index)++;
+}
+
+static char stream_lazy_peek(StreamLazy stream) {
+    return stream.contents[*stream.index];
+}
+
+static char stream_lazy_get(StreamLazy stream) {
+    char c = stream_lazy_peek(stream);
+    stream_lazy_advance(stream);
+    return c;
+}
+
+static void stream_start(Stream *stream) {
+    switch (stream->common.type) {
+        case STREAM_LAZY: {
+            char c = stream_lazy_get(stream->lazy);
+            if (c != '[') {
+                ABORT("Expected start of list, got: %c", c);
+            }
+            return;
+        }
+        case STREAM_SINGLE_INT:
+            return;
+    }
+}
+
+static void stream_comma(Stream *stream) {
+    switch (stream->common.type) {
+        case STREAM_LAZY: {
+            char c = stream_lazy_peek(stream->lazy);
+            if (c == ',') {
+                stream_lazy_advance(stream->lazy);
+            }
+            return;
+        }
+        case STREAM_SINGLE_INT:
+            return;
+    }
+}
+
+/***** Element *****/
+
+typedef enum {
+    ELEMENT_INT,
+    ELEMENT_LIST,
+    ELEMENT_NONE,
+} ElementType;
+
+typedef union {
+    struct { ElementType type; } common;
+    struct { ElementType type; int value; } integer;
+    struct { ElementType type; Stream *stream; } list;
+
+    // returned when list is out of elements
+    struct { ElementType type; } none;
+} Element;
+
+static Element stream_next_element(Stream *stream) {
+    switch (stream->common.type) {
+        case STREAM_LAZY: {
+            StreamLazy s = stream->lazy;
+            char c = stream_lazy_peek(s);
+            if (c == ']') {
+                stream_lazy_advance(s);
+                return (Element) { .none.type = ELEMENT_NONE };
+            }
+            if (c == '[') {
+                return (Element) {
+                    .list = {
+                        .type = ELEMENT_LIST,
+                        .stream = stream,
+                    },
+                };
+            }
+            if (c < '0' || '9' < c) {
+                ABORT("Unexpected character: %c", c);
+            }
+            int n = 0;
+            while (true) {
+                char c = stream_lazy_peek(s);
+                if (c < '0' || '9' < c) break;
+                stream_lazy_advance(s);
+                n = n * 10 + (c - '0');
+            }
+            return (Element) {
+                .integer = {
+                    .type = ELEMENT_INT,
+                    .value = n,
+                },
+            };
+        }
+        case STREAM_SINGLE_INT: {
+            if (stream->single.consumed) {
+                return (Element) { .none.type = ELEMENT_NONE };
+            }
+            stream->single.consumed = true;
+            return (Element) {
+                .integer = {
+                    .type = ELEMENT_INT,
+                    .value = stream->single.value,
+                },
+            };
+        }
+    }
+}
+
+/***** Compare *****/
+
+static Ordering compare_streams(Stream *stream1, Stream *stream2) {
+    stream_start(stream1);
+    stream_start(stream2);
+
+    while (true) {
+        Element elem1 = stream_next_element(stream1);
+        Element elem2 = stream_next_element(stream2);
+        ElementType type1 = elem1.common.type;
+        ElementType type2 = elem2.common.type;
+
+        // check end of list
+        if (type1 == ELEMENT_NONE && type2 == ELEMENT_NONE) {
+            return EQ;
+        } else if (type1 == ELEMENT_NONE) {
+            return LT;
+        } else if (type2 == ELEMENT_NONE) {
+            return GT;
+        }
+
+        Ordering ord;
+        if (type1 == ELEMENT_INT && type2 == ELEMENT_INT) {
+            int val1 = elem1.integer.value;
+            int val2 = elem2.integer.value;
+            if (val1 < val2) {
+                ord = LT;
+            } else if (val1 > val2) {
+                ord = GT;
+            } else {
+                ord = EQ;
+            }
+        } else if (type1 == ELEMENT_INT && type2 == ELEMENT_LIST) {
+            Stream tmp = stream_single(elem1.integer.value);
+            ord = compare_streams(&tmp, elem2.list.stream);
+        } else if (type1 == ELEMENT_LIST && type2 == ELEMENT_INT) {
+            Stream tmp = stream_single(elem2.integer.value);
+            ord = compare_streams(elem1.list.stream, &tmp);
+        } else {
+            ord = compare_streams(elem1.list.stream, elem2.list.stream);
+        }
+        if (ord != EQ) return ord;
+
+        stream_comma(stream1);
+        stream_comma(stream2);
+    }
+}
+
+/***** Entrypoint *****/
+
+static bool is_right_order(char *line1, char *line2) {
+    Stream stream1 = stream_init(line1);
+    Stream stream2 = stream_init(line2);
+    switch (compare_streams(&stream1, &stream2)) {
+        case LT: return true;
+        case EQ: return true;
+        case GT: return false;
+    }
+}
+
+int main(int argc, char **argv) {
+    START_TIMER();
+
+    int sum_ordered_indices = 0;
+    int curr_index = 1;
+
+    char *line1 = NULL, *line2 = NULL;
+    while (get_line(&line1, stdin) != -1) {
+        get_line(&line2, stdin);
+        bool right_order = is_right_order(line1, line2);
+        if (right_order) {
+            sum_ordered_indices += curr_index;
+        }
+
+        // skip empty line
+        get_line(&line1, stdin);
+
+        curr_index++;
+    }
+
+    printf("Part 1: %d\n", sum_ordered_indices);
+
+    END_TIMER();
+    return 0;
+}
