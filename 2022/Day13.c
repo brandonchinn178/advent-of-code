@@ -108,9 +108,11 @@ static void stream_reset(Stream *stream) {
     switch (stream->common.type) {
         case STREAM_LAZY: {
             stream->lazy.index = 0;
+            return;
         }
         case STREAM_SINGLE_INT: {
             stream->single.consumed = false;
+            return;
         }
     }
 }
@@ -229,6 +231,13 @@ static Ordering compare_streams(Stream *stream1, Stream *stream2) {
     }
 }
 
+static Ordering compare_full_streams(Stream *stream1, Stream *stream2) {
+    Ordering ord = compare_streams(stream1, stream2);
+    stream_reset(stream1);
+    stream_reset(stream2);
+    return ord;
+}
+
 /***** Entrypoint *****/
 
 int main(int argc, char **argv) {
@@ -250,20 +259,53 @@ int main(int argc, char **argv) {
         get_line(&line1, stdin);
 
         // part 1
-        if (is_leq(compare_streams(stream1, stream2))) {
+        if (is_leq(compare_full_streams(stream1, stream2))) {
             part1_total += curr_index;
         }
 
         // part 2
-        stream_reset(stream1);
-        stream_reset(stream2);
         list_append(&all_lines, stream1);
         list_append(&all_lines, stream2);
 
         curr_index++;
     }
 
+    // part 2
+
+    Stream *divider1 = stream_init("[[2]]");
+    Stream *divider2 = stream_init("[[6]]");
+    list_append(&all_lines, divider1);
+    list_append(&all_lines, divider2);
+
+    while (true) {
+        bool did_swap = false;
+        for (int i = 0; i < all_lines.length - 1; i++) {
+            int j = i + 1;
+            Stream *s1 = list_get(all_lines, i);
+            Stream *s2 = list_get(all_lines, j);
+            if (compare_full_streams(s1, s2) == GT) {
+                did_swap = true;
+                list_set(&all_lines, i, s2);
+                list_set(&all_lines, j, s1);
+            }
+        }
+        if (!did_swap) {
+            break;
+        }
+    }
+
+    int part2_total = 1;
+    for (int i = 0; i < all_lines.length; i++) {
+        Stream *s = list_get(all_lines, i);
+        if (s == divider1 || s == divider2) {
+            part2_total *= i + 1;
+        }
+    }
+
+    // output
+
     printf("Part 1: %d\n", part1_total);
+    printf("Part 2: %d\n", part2_total);
 
     END_TIMER();
     return 0;

@@ -44,6 +44,7 @@
     extern List list_empty();
     extern List list_init(size_t size);
     extern void list_append(List* list, void* item);
+    extern void list_set(List *list, size_t index, void *item);
     extern void* list_get(List list, size_t index);
 
     /***** Sorting *****/

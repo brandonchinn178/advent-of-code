@@ -42,6 +42,10 @@ void list_append(List* list, void* item) {
     list->length++;
 }
 
+void list_set(List *list, size_t index, void *item) {
+    list->contents[index] = item;
+}
+
 void* list_get(List list, size_t index) {
     return list.contents[index];
 }
