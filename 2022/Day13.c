@@ -2,6 +2,14 @@
 
 typedef enum { LT, EQ, GT } Ordering;
 
+static bool is_leq(Ordering ord) {
+    switch (ord) {
+        case LT: return true;
+        case EQ: return true;
+        case GT: return false;
+    }
+}
+
 /***** Streams *****/
 
 typedef enum {
@@ -9,12 +17,15 @@ typedef enum {
   STREAM_SINGLE_INT,
 } StreamType;
 
+// represents a stream generated from the given list, where
+// contents[index] represents the current state of the stream.
 typedef struct {
     StreamType type;
     char *contents;
-    int *index;
+    int index;
 } StreamLazy;
 
+// represents a stream with one element: value.
 typedef struct {
     StreamType type;
     int value;
@@ -23,24 +34,22 @@ typedef struct {
 
 typedef union {
     struct { StreamType type; } common;
-
-    // represents a stream generated from the given list, where
-    // contents[*index] represents the current state of the stream.
     StreamLazy lazy;
-
-    // represents a stream with one element: value.
     StreamSingle single;
 } Stream;
 
-static Stream stream_init(char *contents) {
-    int *index = malloc(sizeof(int));
-    return (Stream) {
+static Stream* stream_init(char *contents0) {
+    Stream *stream = malloc(sizeof(Stream));
+    char *contents = malloc((strlen(contents0) + 1) * sizeof(char));
+    strcpy(contents, contents0);
+    *stream = (Stream) {
         .lazy = {
             .type = STREAM_LAZY,
             .contents = contents,
-            .index = index,
+            .index = 0,
         },
     };
+    return stream;
 }
 
 static Stream stream_single(int value) {
@@ -53,15 +62,15 @@ static Stream stream_single(int value) {
     };
 }
 
-static void stream_lazy_advance(StreamLazy stream) {
-    (*stream.index)++;
+static void stream_lazy_advance(StreamLazy *stream) {
+    stream->index++;
 }
 
-static char stream_lazy_peek(StreamLazy stream) {
-    return stream.contents[*stream.index];
+static char stream_lazy_peek(StreamLazy *stream) {
+    return stream->contents[stream->index];
 }
 
-static char stream_lazy_get(StreamLazy stream) {
+static char stream_lazy_get(StreamLazy *stream) {
     char c = stream_lazy_peek(stream);
     stream_lazy_advance(stream);
     return c;
@@ -70,7 +79,7 @@ static char stream_lazy_get(StreamLazy stream) {
 static void stream_start(Stream *stream) {
     switch (stream->common.type) {
         case STREAM_LAZY: {
-            char c = stream_lazy_get(stream->lazy);
+            char c = stream_lazy_get(&stream->lazy);
             if (c != '[') {
                 ABORT("Expected start of list, got: %c", c);
             }
@@ -84,14 +93,25 @@ static void stream_start(Stream *stream) {
 static void stream_comma(Stream *stream) {
     switch (stream->common.type) {
         case STREAM_LAZY: {
-            char c = stream_lazy_peek(stream->lazy);
+            char c = stream_lazy_peek(&stream->lazy);
             if (c == ',') {
-                stream_lazy_advance(stream->lazy);
+                stream_lazy_advance(&stream->lazy);
             }
             return;
         }
         case STREAM_SINGLE_INT:
             return;
+    }
+}
+
+static void stream_reset(Stream *stream) {
+    switch (stream->common.type) {
+        case STREAM_LAZY: {
+            stream->lazy.index = 0;
+        }
+        case STREAM_SINGLE_INT: {
+            stream->single.consumed = false;
+        }
     }
 }
 
@@ -115,7 +135,7 @@ typedef union {
 static Element stream_next_element(Stream *stream) {
     switch (stream->common.type) {
         case STREAM_LAZY: {
-            StreamLazy s = stream->lazy;
+            StreamLazy *s = &stream->lazy;
             char c = stream_lazy_peek(s);
             if (c == ']') {
                 stream_lazy_advance(s);
@@ -211,37 +231,39 @@ static Ordering compare_streams(Stream *stream1, Stream *stream2) {
 
 /***** Entrypoint *****/
 
-static bool is_right_order(char *line1, char *line2) {
-    Stream stream1 = stream_init(line1);
-    Stream stream2 = stream_init(line2);
-    switch (compare_streams(&stream1, &stream2)) {
-        case LT: return true;
-        case EQ: return true;
-        case GT: return false;
-    }
-}
-
 int main(int argc, char **argv) {
     START_TIMER();
 
-    int sum_ordered_indices = 0;
+    int part1_total = 0;
     int curr_index = 1;
+
+    List all_lines = list_empty();
 
     char *line1 = NULL, *line2 = NULL;
     while (get_line(&line1, stdin) != -1) {
+        Stream *stream1 = stream_init(line1);
+
         get_line(&line2, stdin);
-        bool right_order = is_right_order(line1, line2);
-        if (right_order) {
-            sum_ordered_indices += curr_index;
-        }
+        Stream *stream2 = stream_init(line2);
 
         // skip empty line
         get_line(&line1, stdin);
 
+        // part 1
+        if (is_leq(compare_streams(stream1, stream2))) {
+            part1_total += curr_index;
+        }
+
+        // part 2
+        stream_reset(stream1);
+        stream_reset(stream2);
+        list_append(&all_lines, stream1);
+        list_append(&all_lines, stream2);
+
         curr_index++;
     }
 
-    printf("Part 1: %d\n", sum_ordered_indices);
+    printf("Part 1: %d\n", part1_total);
 
     END_TIMER();
     return 0;
