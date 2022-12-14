@@ -240,6 +240,10 @@ static Ordering compare_full_streams(Stream *stream1, Stream *stream2) {
 
 /***** Entrypoint *****/
 
+static bool is_stream_lt(Stream *stream1, Stream *stream2) {
+    return compare_full_streams(stream1, stream2) == LT;
+}
+
 int main(int argc, char **argv) {
     START_TIMER();
 
@@ -277,22 +281,7 @@ int main(int argc, char **argv) {
     list_append(&all_lines, divider1);
     list_append(&all_lines, divider2);
 
-    while (true) {
-        bool did_swap = false;
-        for (int i = 0; i < all_lines.length - 1; i++) {
-            int j = i + 1;
-            Stream *s1 = list_get(all_lines, i);
-            Stream *s2 = list_get(all_lines, j);
-            if (compare_full_streams(s1, s2) == GT) {
-                did_swap = true;
-                list_set(&all_lines, i, s2);
-                list_set(&all_lines, j, s1);
-            }
-        }
-        if (!did_swap) {
-            break;
-        }
-    }
+    sort_list_inplace(all_lines, ASC, (IsLessThan) is_stream_lt);
 
     int part2_total = 1;
     for (int i = 0; i < all_lines.length; i++) {
