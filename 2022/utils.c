@@ -97,6 +97,6 @@ static void merge_sort_inplace(int* arr, int l, int r, Direction dir) {
     }
 }
 
-void sort_list_inplace(int* arr, int len, Direction dir) {
+void sort_int_list_inplace(int* arr, int len, Direction dir) {
     merge_sort_inplace(arr, 0, len - 1, dir);
 }
