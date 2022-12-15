@@ -30,6 +30,10 @@
      */
     extern size_t get_line(char** buf, FILE* stream);
 
+    /***** Numbers *****/
+
+    #define signum(x) (x > 0 ? 1 : x < 0 ? -1 : 0)
+
     /***** Strings *****/
 
     extern bool is_prefix(const char* s, const char* pre);
