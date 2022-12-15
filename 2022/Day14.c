@@ -28,6 +28,15 @@ static MapColumn init_map_column() {
     };
 }
 
+static MapColumn copy_map_column(MapColumn col) {
+    size_t length = col._length;
+    Occupant *occupants = malloc(length * sizeof(Occupant));
+    for (int i = 0; i < length; i++) {
+        occupants[i] = col.occupants[i];
+    }
+    return (MapColumn) { .occupants = occupants, ._length = length };
+}
+
 static Occupant map_column_get_occupant(MapColumn *col, int y) {
     if (y >= col->_length) {
         return ABYSS;
@@ -67,6 +76,8 @@ typedef struct {
     // {MAP_CENTER, MAP_CENTER - 1, MAP_CENTER + 1, ...}
     MapColumn *columns;
     size_t _length;
+
+    int max_y;
 } Map;
 
 static Map init_map() {
@@ -78,6 +89,20 @@ static Map init_map() {
     return (Map) {
         .columns = columns,
         ._length = initial_capacity,
+        .max_y = 0,
+    };
+}
+
+static Map copy_map(Map map) {
+    size_t length = map._length;
+    MapColumn *columns = malloc(length * sizeof(MapColumn));
+    for (int i = 0; i < length; i++) {
+        columns[i] = copy_map_column(map.columns[i]);
+    }
+    return (Map) {
+        .columns = columns,
+        ._length = length,
+        .max_y = map.max_y,
     };
 }
 
@@ -108,14 +133,14 @@ static void map_set_point(Map *map, int x, int y, Occupant occupant) {
 static void print_map_with_point(Map *map, int extra_x, int extra_y) {
     int min_x = 10000;
     int max_x = -1;
-    int max_y = -1;
+    int min_y = 0;
+    int max_y = map->max_y + 2;
 
     for (int i = 0; i < map->_length; i++) {
         int x = _from_map_index(i);
         MapColumn *col = &map->columns[i];
         for (int y = 0; y < col->_length; y++) {
             if (map_column_is_filled(col, y)) {
-                if (y > max_y) max_y = y;
                 if (x < min_x) min_x = x;
                 if (x > max_x) max_x = x;
             }
@@ -123,10 +148,8 @@ static void print_map_with_point(Map *map, int extra_x, int extra_y) {
     }
 
     // add padding
-    int min_y = 0;
     min_x -= 2;
     max_x += 2;
-    max_y += 1;
 
     printf("Window: (%d, %d) -> (%d, %d)\n", min_x, min_y, max_x, max_y);
     for (int y = min_y; y <= max_y; y++) {
@@ -195,6 +218,7 @@ static void add_points(Map *map, char *line, size_t line_len) {
             for (int i = x1; i <= x2; i++) {
                 for (int j = y1; j <= y2; j++) {
                     map_set_point(map, i, j, ROCK);
+                    if (j > map->max_y) map->max_y = j;
                 }
             }
         }
@@ -202,48 +226,60 @@ static void add_points(Map *map, char *line, size_t line_len) {
     }
 }
 
-static bool drop_sand(Map *map) {
+typedef union {
+    bool dropped_off_map;
+    struct {
+        bool dropped_off_map;
+        int x, y;
+    } new_point;
+} RestingPoint;
+
+static RestingPoint drop_sand(Map *map, bool infinite_abyss) {
     int x = SAND_START_X;
     int y = SAND_START_Y;
-    while (true) {
-        // printf("\33c\e[3J");
-        // print_map_with_point(map, x, y);
-        // usleep(10000);
-        switch (map_get_occupant(map, x, y + 1)) {
-            case ABYSS: return true;
-            case EMPTY: {
-                y = y + 1;
-                break;
-            }
+    int deltas[3][2] = {
+        {0, 1},
+        {-1, 1},
+        {1, 1}
+    };
+
+loop:
+    // printf("\33c\e[3J");
+    // print_map_with_point(map, x, y);
+    // usleep(10000);
+    for (int i = 0; i < 3; i++) {
+        int next_x = x + deltas[i][0];
+        int next_y = y + deltas[i][1];
+        Occupant occupant =
+            (!infinite_abyss && next_y == map->max_y + 2)
+                ? ROCK
+                : map_get_occupant(map, next_x, next_y);
+        switch (occupant) {
             case ROCK:
-            case SAND: {
-                switch (map_get_occupant(map, x - 1, y + 1)) {
-                    case ABYSS: return true;
-                    case EMPTY: {
-                        x = x - 1;
-                        y = y + 1;
-                        break;
-                    }
-                    case ROCK:
-                    case SAND: {
-                        switch (map_get_occupant(map, x + 1, y + 1)) {
-                            case ABYSS: return true;
-                            case EMPTY: {
-                                x = x + 1;
-                                y = y + 1;
-                                break;
-                            }
-                            case ROCK:
-                            case SAND: {
-                                map_set_point(map, x, y, SAND);
-                                return false;
-                            }
-                        }
-                    }
+            case SAND:
+                // try next delta
+                break;
+            case ABYSS:
+                if (infinite_abyss) {
+                    return (RestingPoint) { .dropped_off_map = true };
                 }
-            }
+                // fallthrough to EMPTY
+            case EMPTY:
+                x = next_x;
+                y = next_y;
+                goto loop;
         }
     }
+
+    map_set_point(map, x, y, SAND);
+    return (RestingPoint) {
+        .new_point = {
+            .dropped_off_map = false,
+            .x = x,
+            .y = y,
+        },
+    };
+
 }
 
 int main(int argc, char **argv) {
@@ -261,20 +297,38 @@ int main(int argc, char **argv) {
     // print_map(&map);
 
     // part 1
-    bool dropped_off_map = false;
-    int sand_count = 0;
+    Map part1_map = copy_map(map);
+    int part1_count = 0;
     while (true) {
-        dropped_off_map = drop_sand(&map);
-        if (dropped_off_map) {
+        RestingPoint resting_point = drop_sand(&part1_map, true);
+        if (resting_point.dropped_off_map) {
             break;
         }
-        sand_count++;
+        part1_count++;
         // printf("\33c\e[3J");
-        // printf("===== After dropping sand #%d =====\n", sand_count);
-        // print_map(&map);
+        // printf("===== After dropping sand #%d =====\n", part1_count);
+        // print_map(&part1_map);
         // usleep(10000);
     }
-    printf("Part 1: %d\n", sand_count);
+    printf("Part 1: %d\n", part1_count);
+
+    // part 2
+    Map part2_map = copy_map(map);
+    int part2_count = 0;
+    while (true) {
+        RestingPoint resting_point = drop_sand(&part2_map, false);
+        part2_count++;
+        int resting_x = resting_point.new_point.x;
+        int resting_y = resting_point.new_point.y;
+        if (resting_x == SAND_START_X && resting_y == SAND_START_Y) {
+            break;
+        }
+        // printf("\33c\e[3J");
+        // printf("===== After dropping sand #%d =====\n", part2_count);
+        // print_map(&part2_map);
+        // usleep(10000);
+    }
+    printf("Part 2: %d\n", part2_count);
 
     END_TIMER();
     return 0;
