@@ -119,6 +119,6 @@ void sort_int_list_inplace(int* arr, int len, Direction dir) {
     }
 }
 
-void sort_list_inplace(List list, Direction dir, IsLessThan is_lt) {
-    merge_sort_inplace(list.contents, 0, list.length - 1, dir, is_lt);
+void sort_list_inplace(List *list, Direction dir, IsLessThan is_lt) {
+    merge_sort_inplace(list->contents, 0, list->length - 1, dir, is_lt);
 }
