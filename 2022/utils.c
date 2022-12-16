@@ -50,6 +50,10 @@ void* list_get(List list, size_t index) {
     return list.contents[index];
 }
 
+void list_free(List list) {
+    free(list.contents);
+}
+
 /***** Sorting *****/
 
 static void merge_sort_inplace(

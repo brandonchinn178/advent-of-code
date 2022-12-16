@@ -52,6 +52,7 @@
     extern void list_append(List* list, void* item);
     extern void list_set(List *list, size_t index, void *item);
     extern void* list_get(List list, size_t index);
+    extern void list_free(List list);
 
     /***** Sorting *****/
 
