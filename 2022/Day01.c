@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
     while (line_len != -1) {
         line_len = get_line(&line, stdin);
         if (line_len == -1 || line_len == 0) {
-            sort_int_list_inplace(calories, 4, DESC);
+            qsort(calories, 4, sizeof(int), cmp_int_desc);
             calories[3] = 0;
         } else {
             calories[3] += atoi(line);

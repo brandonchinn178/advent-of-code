@@ -170,7 +170,7 @@ int main(int argc, char **argv) {
     for (int i = 0; i < 20; i++) {
         do_round(num_monkeys, monkeys, part1_items, part1_monkey_counts, 3, shared_modulus);
     }
-    sort_int_list_inplace(part1_monkey_counts, num_monkeys, DESC);
+    qsort(part1_monkey_counts, num_monkeys, sizeof(int), cmp_int_desc);
     printf("Part 1: %d\n", part1_monkey_counts[0] * part1_monkey_counts[1]);
 
     // part 2
@@ -183,7 +183,7 @@ int main(int argc, char **argv) {
     for (int i = 0; i < 10000; i++) {
         do_round(num_monkeys, monkeys, part2_items, part2_monkey_counts, 1, shared_modulus);
     }
-    sort_int_list_inplace(part2_monkey_counts, num_monkeys, DESC);
+    qsort(part2_monkey_counts, num_monkeys, sizeof(int), cmp_int_desc);
     printf("Part 2: %llu\n", (uint64_t) part2_monkey_counts[0] * part2_monkey_counts[1]);
 
     END_TIMER();

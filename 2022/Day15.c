@@ -37,8 +37,8 @@ static Range* range_excluded(Sensor *sensor, int target_y) {
     return range;
 }
 
-static bool range_starts_before(Range *r1, Range *r2) {
-    return r1->lo < r2->lo;
+static int cmp_range(const void *r1, const void *r2) {
+    return (*(Range**)r1)->lo - (*(Range**)r2)->lo;
 }
 
 int main(int argc, char **argv) {
@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
     }
 
     // part 1
-    sort_list_inplace(&part1_exclude_ranges, ASC, (IsLessThan) range_starts_before);
+    qsort(part1_exclude_ranges.contents, part1_exclude_ranges.length, sizeof(Range*), cmp_range);
     int part1_count = 0;
     int prev;
     for (int i = 0; i < part1_exclude_ranges.length; i++) {
@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
                 list_append(&exclude_ranges, range);
             }
         }
-        sort_list_inplace(&exclude_ranges, ASC, (IsLessThan) range_starts_before);
+        qsort(exclude_ranges.contents, exclude_ranges.length, sizeof(Range*), cmp_range);
         int prev = -1;
         for (int i = 0; i < exclude_ranges.length && prev < MAX_COORD; i++) {
             Range *range = list_get(exclude_ranges, i);

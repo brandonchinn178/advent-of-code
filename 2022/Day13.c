@@ -1,15 +1,5 @@
 #include "./utils.h"
 
-typedef enum { LT, EQ, GT } Ordering;
-
-static bool is_leq(Ordering ord) {
-    switch (ord) {
-        case LT: return true;
-        case EQ: return true;
-        case GT: return false;
-    }
-}
-
 /***** Streams *****/
 
 typedef enum {
@@ -185,7 +175,7 @@ static Element stream_next_element(Stream *stream) {
 
 /***** Compare *****/
 
-static Ordering compare_streams(Stream *stream1, Stream *stream2) {
+static int cmp_stream(Stream *stream1, Stream *stream2) {
     stream_start(stream1);
     stream_start(stream2);
 
@@ -197,52 +187,40 @@ static Ordering compare_streams(Stream *stream1, Stream *stream2) {
 
         // check end of list
         if (type1 == ELEMENT_NONE && type2 == ELEMENT_NONE) {
-            return EQ;
+            return 0;
         } else if (type1 == ELEMENT_NONE) {
-            return LT;
+            return -1;
         } else if (type2 == ELEMENT_NONE) {
-            return GT;
+            return 1;
         }
 
-        Ordering ord;
+        int cmp_result;
         if (type1 == ELEMENT_INT && type2 == ELEMENT_INT) {
-            int val1 = elem1.integer.value;
-            int val2 = elem2.integer.value;
-            if (val1 < val2) {
-                ord = LT;
-            } else if (val1 > val2) {
-                ord = GT;
-            } else {
-                ord = EQ;
-            }
+            cmp_result = elem1.integer.value - elem2.integer.value;
         } else if (type1 == ELEMENT_INT && type2 == ELEMENT_LIST) {
             Stream tmp = stream_single(elem1.integer.value);
-            ord = compare_streams(&tmp, elem2.list.stream);
+            cmp_result = cmp_stream(&tmp, elem2.list.stream);
         } else if (type1 == ELEMENT_LIST && type2 == ELEMENT_INT) {
             Stream tmp = stream_single(elem2.integer.value);
-            ord = compare_streams(elem1.list.stream, &tmp);
+            cmp_result = cmp_stream(elem1.list.stream, &tmp);
         } else {
-            ord = compare_streams(elem1.list.stream, elem2.list.stream);
+            cmp_result = cmp_stream(elem1.list.stream, elem2.list.stream);
         }
-        if (ord != EQ) return ord;
+        if (cmp_result != 0) return cmp_result;
 
         stream_comma(stream1);
         stream_comma(stream2);
     }
 }
 
-static Ordering compare_full_streams(Stream *stream1, Stream *stream2) {
-    Ordering ord = compare_streams(stream1, stream2);
-    stream_reset(stream1);
-    stream_reset(stream2);
-    return ord;
+static int cmp_full_stream(const void *stream1, const void *stream2) {
+    int result = cmp_stream((Stream*) stream1, (Stream*) stream2);
+    stream_reset((Stream*) stream1);
+    stream_reset((Stream*) stream2);
+    return result;
 }
 
 /***** Entrypoint *****/
-
-static bool is_stream_lt(Stream *stream1, Stream *stream2) {
-    return compare_full_streams(stream1, stream2) == LT;
-}
 
 int main(int argc, char **argv) {
     START_TIMER();
@@ -263,7 +241,7 @@ int main(int argc, char **argv) {
         get_line(&line1, stdin);
 
         // part 1
-        if (is_leq(compare_full_streams(stream1, stream2))) {
+        if (cmp_full_stream(stream1, stream2) < 0) {
             part1_total += curr_index;
         }
 
@@ -281,7 +259,7 @@ int main(int argc, char **argv) {
     list_append(&all_lines, divider1);
     list_append(&all_lines, divider2);
 
-    sort_list_inplace(all_lines, ASC, (IsLessThan) is_stream_lt);
+    qsort(all_lines.contents, all_lines.length, sizeof(Stream*), cmp_full_stream);
 
     int part2_total = 1;
     for (int i = 0; i < all_lines.length; i++) {
