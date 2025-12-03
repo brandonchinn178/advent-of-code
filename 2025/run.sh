@@ -15,6 +15,12 @@ main() {
         day="${day%%-sample}"
     fi
 
+    if [[ -f "${input}.result" ]]; then
+        echo '===== Expected results ====='
+        cat "${input}.result"
+        echo ''
+    fi
+
     if [[ -f "${day}.sql" ]]; then
         rm -rf .runner.db
         sqlite3 .runner.db \
