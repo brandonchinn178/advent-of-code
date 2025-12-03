@@ -6,7 +6,7 @@
 
 #define MAX_BANKS 200
 #define MAX_COLS 100
-typedef char BatteryBank[MAX_COLS];
+typedef int BatteryBank[MAX_COLS];
 typedef BatteryBank BatteryBanks[MAX_BANKS];
 typedef unsigned long long int Joltage;
 
@@ -22,7 +22,7 @@ void load_batteries(BatteryBanks batteries, int* num_banks, int* num_cols) {
         }
         *num_cols = line_len - 1;
         for (int col = 0; col < *num_cols; col++) {
-            batteries[bank][col] = line[col];
+            batteries[bank][col] = line[col] - '0';
         }
         bank++;
     }
@@ -31,19 +31,20 @@ void load_batteries(BatteryBanks batteries, int* num_banks, int* num_cols) {
 
 Joltage get_joltage(BatteryBank bank, int num_cols, int num_digits) {
     Joltage acc = 0;
+    int start = 0;
 
     for (; num_digits > 0; num_digits--) {
         int max_digit_pos = -1;
-        for (int i = 0; i < num_cols - num_digits + 1; i++) {
+        int end = num_cols - num_digits + 1;
+        for (int i = start; i < end; i++) {
             if (max_digit_pos == -1 || bank[i] > bank[max_digit_pos]) {
                 max_digit_pos = i;
             }
         }
 
-        int max_digit = bank[max_digit_pos] - '0';
-        bank += max_digit_pos + 1;
-        num_cols -= max_digit_pos + 1;
+        int max_digit = bank[max_digit_pos];
         acc = acc * 10 + max_digit;
+        start = max_digit_pos + 1;
     }
 
     return acc;

@@ -12,7 +12,7 @@ def timer():
         yield
     finally:
         duration = (time.perf_counter_ns() - start) // 1000000
-        print(f"\n[duration] {duration} ms", file=sys.stderr)
+        print(f"[duration] {duration} ms", file=sys.stderr)
 
 @timer()
 def main():
