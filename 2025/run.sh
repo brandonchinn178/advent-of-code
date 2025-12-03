@@ -15,8 +15,20 @@ main() {
         day="${day%%-sample}"
     fi
 
-    run_stack --no-run "${day}.hs"
-    time run_stack "${day}.hs" -- +RTS -t -RTS < "${input}"
+    if [[ -f "${day}.sql" ]]; then
+        rm -rf .runner.db
+        sqlite3 .runner.db \
+            'create table input (line TEXT)' \
+            '.mode csv' \
+            '.headers off' \
+            ".import ${input} input"
+        time sqlite3 .runner.db -bail < "${day}.sql"
+    fi
+
+    if [[ -f "${day}.hs" ]]; then
+        run_stack --no-run "${day}.hs"
+        time run_stack "${day}.hs" -- +RTS -t -RTS < "${input}"
+    fi
 }
 
 run_stack() {
@@ -24,7 +36,6 @@ run_stack() {
         --optimize \
         --use-root \
         --ghc-options=-Wall \
-        --ghc-options=-Werror \
         --resolver=nightly-2025-12-01 \
         --package text \
         "$@"
