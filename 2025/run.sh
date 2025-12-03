@@ -6,27 +6,27 @@ main() {
     local input=${1:-}; shift
 
     if [[ -z "${input}" ]]; then
-        echo >&2 'Day is not provided'
+        echo >&2 'Input file is required'
         exit 1
     fi
 
-    if [[ "${input}" == *-sample ]]; then
-        local day="${input%%-sample}"
-    else
-        local day="${input}"
+    local day=$(basename "${input}" | sed 's/.txt//')
+    if [[ "${day}" == *-sample ]]; then
+        day="${day%%-sample}"
     fi
 
     run_stack --no-run "${day}.hs"
-    time run_stack "${day}.hs" < "data/${input}.txt"
+    time run_stack "${day}.hs" -- +RTS -t -RTS < "${input}"
 }
 
 run_stack() {
     stack script \
-        --resolver=nightly-2025-12-01 \
         --optimize \
         --use-root \
         --ghc-options=-Wall \
         --ghc-options=-Werror \
+        --resolver=nightly-2025-12-01 \
+        --package text \
         "$@"
 }
 
