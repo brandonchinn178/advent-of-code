@@ -1,4 +1,4 @@
 /data/*.txt
 !/data/*-sample.txt
 
-.runner.db
+build/
