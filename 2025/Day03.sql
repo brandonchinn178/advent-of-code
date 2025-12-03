@@ -54,7 +54,6 @@ with batteries_with_top_digit as (
 select sum(joltage) from joltages;
 
 -- part 2
-select '';
 select '---------- Part 2 ----------';
 create table possibilities as
 with recursive
