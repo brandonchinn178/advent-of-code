@@ -8,11 +8,14 @@ main = do
 
   -- part 1
   let states = scanl (\a b -> (a + b) `mod` 100) start input
-  putStrLn . ("Part 1: " ++) . show . length . filter (== 0) $ states
+  printPart 1 . length . filter (== 0) $ states
 
   -- part 2
   let (_, count) = foldl' step (start, 0) input
-  putStrLn . ("Part 2: " ++) . show $ count
+  printPart 2 count
+
+printPart :: Show a => Int -> a -> IO ()
+printPart part result = putStrLn $ "Part " ++ show part ++ ": " ++ show result
 
 parse :: String -> Int
 parse = \case

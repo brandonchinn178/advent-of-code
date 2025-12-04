@@ -8,8 +8,11 @@ import Data.Text.IO qualified as Text
 main :: IO ()
 main = do
   input <- map parse . Text.splitOn "," . Text.strip <$> Text.getContents
-  print . sum . filter isInvalid1 . concatMap expand $ input
-  print . sum . filter isInvalid2 . concatMap expand $ input
+  printPart 1 . sum . filter isInvalid1 . concatMap expand $ input
+  printPart 2 . sum . filter isInvalid2 . concatMap expand $ input
+
+printPart :: Show a => Int -> a -> IO ()
+printPart part result = putStrLn $ "Part " ++ show part ++ ": " ++ show result
 
 parse :: Text -> (Integer, Integer)
 parse s =
