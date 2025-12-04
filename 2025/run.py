@@ -115,9 +115,6 @@ class RunSqlite(Runner):
     suffix = "sql"
 
     def run(self, *, datafile: Path, src: Path, outdir: Path) -> None:
-        db_path = outdir / "run.db"
-        db_path.unlink(missing_ok=True)
-
         # handle ctrl-c on long sqlite3 queries
         db_queue = queue.SimpleQueue()
         def interrupt(sig, frame):
@@ -132,7 +129,6 @@ class RunSqlite(Runner):
                     self._run,
                     datafile=datafile,
                     src=src,
-                    db_path=db_path,
                     db_queue=db_queue,
                 )
             )
@@ -144,10 +140,9 @@ class RunSqlite(Runner):
         *,
         datafile: Path,
         src: Path,
-        db_path: Path,
         db_queue: queue.SimpleQueue[sqlite3.Connection],
     ) -> dict[int, Any]:
-        with sqlite3.connect(db_path) as db:
+        with sqlite3.connect(":memory:") as db:
             db_queue.put(db)
 
             lines = [(line,) for line in datafile.read_text().splitlines()]
