@@ -92,10 +92,15 @@ class RunHaskell(MakeRunner):
     suffix = "hs"
 
     def get_build_cmd(self, *, src: Path, exe: Path) -> list[str]:
+        packages = ["text"]
         return [
             "ghc-9.12",
             *("-Wall", "-O2"),
-            *("-package", "text"),
+            *(
+                flag
+                for package in packages
+                for flag in ("-package", package)
+            ),
             *("-odir", exe.parent),
             *("-hidir", exe.parent),
             *("-o", exe),
