@@ -25,45 +25,72 @@ main() {
 
     if [[ -f "${day}.c" ]]; then
         echo -e '\n===== C ====='
-        local outdir_c="${outdir}/c/${day}"
-        mkdir -p "${outdir_c}"
-        if [[ "${day}.c" -nt "${outdir_c}/main" ]]; then
-            gcc -Wall -O3 \
-                -o "${outdir_c}/main" \
-                "${day}.c"
-        fi
-        timer "${outdir_c}/main" < "${input}"
+        run_c "${input}" "${day}" || true
     fi
 
     if [[ -f "${day}.hs" ]]; then
         echo -e '\n===== Haskell ====='
-        local outdir_hs="${outdir}/hs/${day}"
-        mkdir -p "${outdir_hs}"
-        ghc-9.12 -Wall -O3 \
-            -package text \
-            -odir "${outdir_hs}" \
-            -hidir "${outdir_hs}" \
-            -o "${outdir_hs}/Main" \
-            "${day}.hs"
-        timer "${outdir_hs}/Main" +RTS -t -RTS < "${input}"
+        run_hs "${input}" "${day}" || true
     fi
 
     if [[ -f "${day}.sql" ]]; then
         echo -e '\n===== SQL ====='
-        local db=${outdir}/sqlite/${day}.db
-        rm -rf "${db}"
-        mkdir -p "$(dirname "${db}")"
-        sqlite3 "${db}" \
-            'create table input (line TEXT)' \
-            '.mode csv' \
-            '.headers off' \
-            ".import ${input} input"
-        timer sqlite3 "${db}" -bail < "${day}.sql"
+        run_sqlite "${input}" "${day}" || true
     fi
 }
 
 timer() {
     "${here}/timer.py" "$@"
+}
+
+run_c() {
+    local input="${1}"; shift
+    local day="${1}"; shift
+
+    local outdir_c="${outdir}/c/${day}"
+    mkdir -p "${outdir_c}"
+
+    if [[ "${day}.c" -nt "${outdir_c}/main" ]]; then
+        gcc -Wall -O3 \
+            -o "${outdir_c}/main" \
+            "${day}.c"
+    fi
+
+    timer "${outdir_c}/main" < "${input}"
+}
+
+run_hs() {
+    local input="${1}"; shift
+    local day="${1}"; shift
+
+    local outdir_hs="${outdir}/hs/${day}"
+    mkdir -p "${outdir_hs}"
+
+    ghc-9.12 -Wall -O3 \
+        -package text \
+        -odir "${outdir_hs}" \
+        -hidir "${outdir_hs}" \
+        -o "${outdir_hs}/Main" \
+        "${day}.hs"
+
+    timer "${outdir_hs}/Main" +RTS -t -RTS < "${input}"
+}
+
+run_sqlite() {
+    local input="${1}"; shift
+    local day="${1}"; shift
+
+    local db=${outdir}/sqlite/${day}.db
+    mkdir -p "$(dirname "${db}")"
+
+    rm -rf "${db}"
+    sqlite3 "${db}" \
+        'create table input (line TEXT)' \
+        '.mode csv' \
+        '.headers off' \
+        ".import ${input} input"
+
+    timer sqlite3 "${db}" -bail < "${day}.sql"
 }
 
 main "$@"
