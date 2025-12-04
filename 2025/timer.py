@@ -14,9 +14,9 @@ def timer():
         duration = (time.perf_counter_ns() - start) // 1000000
         print(f"[duration] {duration} ms", file=sys.stderr)
 
-@timer()
 def main():
-    proc = subprocess.run(sys.argv[1:])
+    with timer():
+        proc = subprocess.run(sys.argv[1:])
     if proc.returncode != 0:
         sys.exit(1)
 

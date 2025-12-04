@@ -27,9 +27,11 @@ main() {
         echo -e '\n===== C ====='
         local outdir_c="${outdir}/c/${day}"
         mkdir -p "${outdir_c}"
-        gcc -Wall -O3 \
-            -o "${outdir_c}/main" \
-            "${day}.c"
+        if [[ "${day}.c" -nt "${outdir_c}/main" ]]; then
+            gcc -Wall -O3 \
+                -o "${outdir_c}/main" \
+                "${day}.c"
+        fi
         timer "${outdir_c}/main" < "${input}"
     fi
 
