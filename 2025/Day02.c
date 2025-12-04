@@ -79,6 +79,10 @@ int get_digit(BigInt n, int digit) {
 }
 
 bool has_cycle(BigInt n, int digits, int size) {
+    if (digits % size != 0) {
+        return false;
+    }
+
     for (int i = 0; i < size; i++) {
         int digit = get_digit(n, i);
         for (int j = i; j < digits; j += size) {
@@ -92,16 +96,13 @@ bool has_cycle(BigInt n, int digits, int size) {
 
 bool is_invalid_pt1(BigInt n) {
     int digits = get_num_digits(n);
-    if (digits % 2 != 0) {
-        return false;
-    }
     return has_cycle(n, digits, digits / 2);
 }
 
 bool is_invalid_pt2(BigInt n) {
     int digits = get_num_digits(n);
     for (int i = 1; i < digits; i++) {
-        if (digits % i == 0 && has_cycle(n, digits, i)) {
+        if (has_cycle(n, digits, i)) {
             return true;
         }
     }

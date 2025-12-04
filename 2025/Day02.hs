@@ -23,24 +23,21 @@ parse s =
 expand :: (Integer, Integer) -> [Integer]
 expand (a, b) = [a .. b]
 
-isInvalid1 :: Integer -> Bool
-isInvalid1 n = (digits `mod` 2 == 0) && (upper == lower)
-  where
-    digits = numDigits n
-    (upper, lower) = n `divMod` (10 ^ (digits `div` 2))
-
-isInvalid2 :: Integer -> Bool
-isInvalid2 n =
-  or
-    [ (take digits . cycle . take len) s == s
-    | len <- factors digits
-    ]
+hasCycle :: Integer -> Int -> Bool
+hasCycle n size =
+  size > 0 &&
+  digits `mod` size == 0 &&
+  (take digits . cycle . take size) s == s
   where
     s = show n
     digits = length s
 
-factors :: Int -> [Int]
-factors n = filter (\x -> n `mod` x == 0) [1 .. n - 1]
+isInvalid1 :: Integer -> Bool
+isInvalid1 n = hasCycle n (digits `div` 2)
+  where
+    digits = length $ show n
 
-numDigits :: Integer -> Integer
-numDigits = (+ 1) . floor @Double . logBase 10 . fromIntegral
+isInvalid2 :: Integer -> Bool
+isInvalid2 n = any (hasCycle n) [1 .. digits - 1]
+  where
+    digits = length $ show n
