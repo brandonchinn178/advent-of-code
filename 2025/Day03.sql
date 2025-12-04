@@ -24,7 +24,7 @@ create index idx_batteries
 on batteries (bank, col, val DESC);
 
 -- part 1
-select '---------- Part 1 ----------';
+insert into output (part, result)
 with batteries_with_top_digit as (
     select
         *,
@@ -51,10 +51,9 @@ with batteries_with_top_digit as (
     from digits
     group by bank
 )
-select sum(joltage) from joltages;
+select 1 as part, sum(joltage) as result from joltages;
 
 -- part 2
-select '---------- Part 2 ----------';
 create table possibilities as
 with recursive
     cte(bank, digits_left, pos, number) AS (
@@ -89,7 +88,11 @@ with recursive
     )
 select bank, cast(number as int) as number from cte where digits_left = 0 order by bank;
 
-select sum(joltage) from (
+insert into output (part, result)
+select
+    2 as part,
+    sum(joltage) as result
+from (
     select max(number) as joltage
     from possibilities
     group by bank

@@ -1,4 +1,4 @@
 ```shell
-./run.sh Day01
-./run.sh Day01-sample
+./run.py data/Day01.txt
+./run.py data/Day01-sample.txt
 ```

@@ -25,15 +25,21 @@ select
 from raw_states;
 
 -- part 1
-select '---------- Part 1 ----------';
-select count(*) from states where pos = 0;
+insert into output (part, result)
+select
+    1 as part,
+    count(*) as result
+from states
+where pos = 0;
 
 -- part 2
-select '---------- Part 2 ----------';
-select sum(
-    abs(raw_pos) / 100
-    + case when prev_pos > 0 and raw_pos < 0 then 1 else 0 end
-    + case when raw_pos == 0 then 1 else 0 end
-)
+insert into output (part, result)
+select
+    2 as part,
+    sum(
+        abs(raw_pos) / 100
+        + case when prev_pos > 0 and raw_pos < 0 then 1 else 0 end
+        + case when raw_pos == 0 then 1 else 0 end
+    ) as result
 from states
 where idx > 0;
