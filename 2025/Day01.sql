@@ -24,22 +24,18 @@ select
     ((val + prev_pos) % 100 + 100) % 100 as pos
 from raw_states;
 
--- part 1
-insert into output (part, result)
-select
-    1 as part,
-    count(*) as result
-from states
-where pos = 0;
+PART1(
+    select count(*)
+    from states
+    where pos = 0
+);
 
--- part 2
-insert into output (part, result)
-select
-    2 as part,
-    sum(
+PART2(
+    select sum(
         abs(raw_pos) / 100
         + case when prev_pos > 0 and raw_pos < 0 then 1 else 0 end
         + case when raw_pos == 0 then 1 else 0 end
-    ) as result
-from states
-where idx > 0;
+    )
+    from states
+    where idx > 0
+);

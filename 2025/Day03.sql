@@ -24,34 +24,35 @@ create index idx_batteries
 on batteries (bank, col, val DESC);
 
 -- part 1
-insert into output (part, result)
-with batteries_with_top_digit as (
-    select
-        *,
-        row_number() over (partition by bank order by val desc) AS rank
-    from batteries
-    where batteries.col < (select max(col) from batteries)
-), first_digits as (
-    select bank, col, val
-    from batteries_with_top_digit
-    where rank = 1
-), batteries_with_next_top_digit as (
-    select
-        batteries.*,
-        row_number() over (partition by batteries.bank order by batteries.val desc) AS rank
-    from batteries inner join first_digits on batteries.bank = first_digits.bank
-    where batteries.col > first_digits.col
-), digits as (
-    select * from first_digits
-    union all
-    select bank, col, val from batteries_with_next_top_digit where rank = 1
-), joltages as (
-    select
-        cast(group_concat(cast(val as string), '' order by col) as int) as joltage
-    from digits
-    group by bank
-)
-select 1 as part, sum(joltage) as result from joltages;
+PART1(
+    with batteries_with_top_digit as (
+        select
+            *,
+            row_number() over (partition by bank order by val desc) AS rank
+        from batteries
+        where batteries.col < (select max(col) from batteries)
+    ), first_digits as (
+        select bank, col, val
+        from batteries_with_top_digit
+        where rank = 1
+    ), batteries_with_next_top_digit as (
+        select
+            batteries.*,
+            row_number() over (partition by batteries.bank order by batteries.val desc) AS rank
+        from batteries inner join first_digits on batteries.bank = first_digits.bank
+        where batteries.col > first_digits.col
+    ), digits as (
+        select * from first_digits
+        union all
+        select bank, col, val from batteries_with_next_top_digit where rank = 1
+    ), joltages as (
+        select
+            cast(group_concat(cast(val as string), '' order by col) as int) as joltage
+        from digits
+        group by bank
+    )
+    select sum(joltage) from joltages
+);
 
 -- part 2
 create table possibilities as
@@ -88,12 +89,11 @@ with recursive
     )
 select bank, cast(number as int) as number from cte where digits_left = 0 order by bank;
 
-insert into output (part, result)
-select
-    2 as part,
-    sum(joltage) as result
-from (
-    select max(number) as joltage
-    from possibilities
-    group by bank
+PART2(
+    select sum(joltage) as result
+    from (
+        select max(number) as joltage
+        from possibilities
+        group by bank
+    )
 );

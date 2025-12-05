@@ -6,6 +6,7 @@ import contextlib
 import dataclasses
 import functools
 import queue
+import re
 import signal
 import sqlite3
 import subprocess
@@ -123,36 +124,73 @@ class RunSqlite(Runner):
                 db.interrupt()
         signal.signal(signal.SIGINT, interrupt)
 
+        script = self._replace_macros(src.read_text())
         with timer():
-            result = fork_and_await(
+            debug, output = fork_and_await(
                 functools.partial(
                     self._run,
                     datafile=datafile,
-                    src=src,
+                    script=script,
                     db_queue=db_queue,
                 )
             )
-            print(f"Part 1: {result[1]}")
-            print(f"Part 2: {result[2]}")
+            for line in debug:
+                print(f"[debug] {line}")
+            if isinstance(output, Exception):
+                raise output
+            if result := output.get(1):
+                print(f"Part 1: {result}")
+            if result := output.get(2):
+                print(f"Part 2: {result}")
 
     def _run(
         self,
         *,
         datafile: Path,
-        src: Path,
+        script: str,
         db_queue: queue.SimpleQueue[sqlite3.Connection],
-    ) -> dict[int, Any]:
+    ) -> tuple[list[str], dict[int, Any] | Exception]:
         with sqlite3.connect(":memory:") as db:
             db_queue.put(db)
 
             lines = [(line,) for line in datafile.read_text().splitlines()]
+
             c = db.cursor()
             c.execute("create table input (line TEXT)")
             c.executemany("insert into input (line) values (?)", lines)
+            c.execute("create table debug (line TEXT)")
             c.execute("create table output (part INT, result TEXT)")
-            c.executescript(src.read_text())
-            c.execute("select * from output order by part")
-            return dict(c.fetchall())
+
+            try:
+                c.executescript(script)
+            except sqlite3.OperationalError as e:
+                output = e
+            else:
+                output = None
+
+            c.execute("select line from debug order by _rowid_")
+            debug = [line for (line,) in c.fetchall()]
+
+            if output is None:
+                c.execute("select * from output order by part")
+                output = dict(c.fetchall())
+
+            return debug, output
+
+    def _replace_macros(self, s: str) -> str:
+        MACROS = {
+            "DEBUG": r"insert into debug (line) \1",
+            "PART1": r"insert into output (part, result) select 1, (\1)",
+            "PART2": r"insert into output (part, result) select 2, (\1)",
+        }
+        for macro, replace in MACROS.items():
+            s = re.sub(
+                r"^" + macro + r"\((.*?)^\)",
+                replace,
+                s,
+                flags=re.MULTILINE | re.DOTALL,
+            )
+        return s
 
 @contextlib.contextmanager
 def timer():

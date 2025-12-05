@@ -94,17 +94,13 @@ where length(val) = length(cycled_val);
 create table vals_with_cycles as
 select val, num_cycles from trials where val = cycled_val;
 
--- part 1
-insert into output (part, result)
-select
-    1 as part,
-    sum(val) as result
-from vals_with_cycles
-where num_cycles = 2;
+PART1(
+    select sum(val)
+    from vals_with_cycles
+    where num_cycles = 2
+);
 
--- part 2
-insert into output (part, result)
-select
-    2 as part,
-    sum(distinct val) as result
-from vals_with_cycles;
+PART2(
+    select sum(distinct val)
+    from vals_with_cycles
+);
