@@ -75,7 +75,7 @@ class MakeRunner(Runner):
         with datafile.open() as f:
             run_cmd = self.get_run_cmd(exe=exe)
             with timer():
-                subprocess.run(run_cmd, stdin=f)
+                subprocess.run(run_cmd, check=True, stdin=f)
 
 class RunC(MakeRunner):
     name = "C"
