@@ -92,19 +92,14 @@ class RunHaskell(MakeRunner):
     name = "Haskell"
     suffix = "hs"
 
-    def get_build_cmd(self, *, src: Path, exe: Path) -> list[str]:
-        packages = ["containers", "text"]
+    def get_build_cmd(self, *, src: Path, exe: Path) -> list[str | Path]:
         return [
             "ghc-9.12",
             *("-Wall", "-O2"),
-            *(
-                flag
-                for package in packages
-                for flag in ("-package", package)
-            ),
             *("-odir", exe.parent),
             *("-hidir", exe.parent),
             *("-o", exe),
+            *("-F", "-pgmF=utils/add_hs_timer.py"),
             src,
         ]
 
