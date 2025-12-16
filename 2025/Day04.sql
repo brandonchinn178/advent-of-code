@@ -109,10 +109,10 @@ order by round -- DEBUG
 --     select round || ': ' || num_removed from rounds
 -- );
 
-PART1(
-    select num_removed from rounds where round = 1
-);
+-- PART1(
+--     select num_removed from rounds where round = 1
+-- );
 
-PART2(
-    select sum(num_removed) from rounds
-);
+-- PART2(
+--     select sum(num_removed) from rounds
+-- );
