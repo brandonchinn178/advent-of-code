@@ -83,7 +83,14 @@ class RunC(MakeRunner):
     suffix = "c"
 
     def get_build_cmd(self, *, src: Path, exe: Path) -> list[str]:
-        return ["gcc", "-Wall", "-O3", "-o", exe.as_posix(), src.as_posix()]
+        return [
+            "gcc",
+            "-Wall",
+            "-O3",
+            *("-Dmain=__real_main", "utils/add_c_timer.c"),
+            *("-o", exe.as_posix()),
+            src.as_posix(),
+        ]
 
     def get_run_cmd(self, *, exe: Path) -> list[str]:
         return [exe.as_posix()]
