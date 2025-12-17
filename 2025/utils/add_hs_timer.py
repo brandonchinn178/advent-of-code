@@ -11,7 +11,7 @@ def main():
     s = Path(input).read_text()
     s = s.replace("main = do", "main = withTimer $ do")
     s += TIMER_CODE
-    s = add_import(fp, s, TIMER_IMPORT)
+    s = add_import(fp, s, IMPORTS)
     Path(output).write_text(s)
 
 
@@ -19,11 +19,7 @@ def add_import(fp: str, s: str, imp: str) -> str:
     lines = s.splitlines()
 
     try:
-        idx = next(
-            i
-            for i, line in enumerate(lines)
-            if not line.startswith("{-#")
-        )
+        idx = next(i for i, line in enumerate(lines) if not line.startswith("{-#"))
     except StopIteration:
         idx = 0
 
@@ -31,7 +27,12 @@ def add_import(fp: str, s: str, imp: str) -> str:
     return "\n".join(lines)
 
 
-TIMER_IMPORT = "import Data.Time qualified as TIMER"
+IMPORTS = ";".join(
+    [
+        "import Data.Time qualified as TIMER",
+        "import Numeric qualified as NUMERIC",
+    ]
+)
 
 TIMER_CODE = """
 withTimer :: IO a -> IO a
@@ -41,7 +42,8 @@ withTimer m = do
   end <- TIMER.getCurrentTime
   let duration = end `TIMER.diffUTCTime` start
       durationMillis = (fromInteger . round) (duration * 1000000) / 1000 :: Double
-  putStrLn $ "[duration.hs] " <> show durationMillis <> " ms"
+      durationRender = NUMERIC.showFFloat Nothing durationMillis ""
+  putStrLn $ "[duration.hs] " <> durationRender <> " ms"
   pure a
 """
 
