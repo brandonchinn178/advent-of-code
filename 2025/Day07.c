@@ -83,13 +83,6 @@ Result run() {
   size_t num_rows = 0;
   load_input(&start_col, splitters, row_splitter_count, &num_rows);
 
-  // printf("Start: (%d, %d)\n", start.x, start.y);
-  // for (int row = 0; row < num_rows; row++) {
-  //   for (int i = 0; i < row_splitter_count[row]; i++) {
-  //     printf("Splitter: (%d, %d)\n", splitters[row][i], row);
-  //   }
-  // }
-
   size_t splitter_count = 0;
   BigInt beam_counts[MAX_COLS] = {0};
   beam_counts[start_col] = 1;

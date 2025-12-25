@@ -5,6 +5,7 @@ import argparse
 import contextlib
 import dataclasses
 import functools
+import os
 import queue
 import re
 import signal
@@ -18,6 +19,7 @@ from typing import Any
 
 HERE = Path(__file__).absolute().parent
 OUTDIR = HERE / "build"
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -49,6 +51,7 @@ def main():
     if not success:
         sys.exit(1)
 
+
 class Runner(abc.ABC):
     name: str
     suffix: str
@@ -56,6 +59,7 @@ class Runner(abc.ABC):
     @abc.abstractmethod
     def run(self, *, datafile: Path, src: Path, outdir: Path) -> None:
         pass
+
 
 class MakeRunner(Runner):
     @abc.abstractmethod
@@ -78,6 +82,7 @@ class MakeRunner(Runner):
             with timer():
                 subprocess.run(run_cmd, check=True, stdin=f)
 
+
 class RunC(MakeRunner):
     name = "C"
     suffix = "c"
@@ -87,6 +92,7 @@ class RunC(MakeRunner):
             "gcc",
             "-Wall",
             "-O3",
+            *(["-g"] if os.environ.get("DEBUG") == "1" else []),
             *("-Dmain=__real_main", "utils/add_c_timer.c"),
             *("-o", exe.as_posix()),
             src.as_posix(),
@@ -94,6 +100,7 @@ class RunC(MakeRunner):
 
     def get_run_cmd(self, *, exe: Path) -> list[str]:
         return [exe.as_posix()]
+
 
 class RunHaskell(MakeRunner):
     name = "Haskell"
@@ -113,6 +120,7 @@ class RunHaskell(MakeRunner):
     def get_run_cmd(self, *, exe: Path) -> list[str]:
         return [exe.as_posix(), "+RTS", "-t", "-RTS"]
 
+
 class RunSqlite(Runner):
     name = "Sqlite"
     suffix = "sql"
@@ -120,10 +128,12 @@ class RunSqlite(Runner):
     def run(self, *, datafile: Path, src: Path, outdir: Path) -> None:
         # handle ctrl-c on long sqlite3 queries
         db_queue = queue.SimpleQueue()
+
         def interrupt(sig, frame):
             with contextlib.suppress(queue.Empty):
                 db = db_queue.get(block=False)
                 db.interrupt()
+
         signal.signal(signal.SIGINT, interrupt)
 
         script = self._replace_macros(src.read_text())
@@ -194,6 +204,7 @@ class RunSqlite(Runner):
             )
         return s
 
+
 @contextlib.contextmanager
 def timer():
     start = time.perf_counter_ns()
@@ -202,6 +213,7 @@ def timer():
     finally:
         duration = ((time.perf_counter_ns() - start) // 1000) / 1000
         print(f"[duration] {duration} ms", file=sys.stderr)
+
 
 def fork_and_await[T](func: Callable[[], T]) -> T:
     result_queue = queue.SimpleQueue()
@@ -221,6 +233,7 @@ def fork_and_await[T](func: Callable[[], T]) -> T:
     if isinstance(result, Exception):
         raise result
     return result
+
 
 if __name__ == "__main__":
     main()
